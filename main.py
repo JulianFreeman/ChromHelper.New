@@ -10,8 +10,8 @@ from qfluentwidgets import (
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.common import resources
-from app.components.profiles_table import ProfilesInterface
-from app.components.extensions_table import ExtensionsInterface
+from app.components.profiles_table import ProfilesTable
+from app.components.extensions_table import ExtensionsTable
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
 from app.common.utils import get_icon_path
@@ -60,23 +60,33 @@ class UserDataListModel(QAbstractListModel):
         self.endResetModel()
 
 
-class CustomTitleBar(MSFluentTitleBar):
+class CHMSFluentWindow(MSFluentWindow):
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__()
+        self.vly_right = QVBoxLayout()
+
+        self.hly_top = QHBoxLayout()
+        self.vly_right.addLayout(self.hly_top)
+
         self.pbn_refresh = PushButton(self)
         self.pbn_refresh.setText("刷新当前数据")
         self.pbn_refresh.setMinimumWidth(100)
 
         self.cmbx_browsers = ModelComboBox(self)
         self.cmbx_browsers.setMinimumWidth(150)
-        # self.cmbx_browsers.setModel(self.userdata_model)
-        self.hBoxLayout.insertWidget(4, self.cmbx_browsers)
-        self.hBoxLayout.insertWidget(5, self.pbn_refresh)
+
+        self.hly_top.addWidget(self.cmbx_browsers)
+        self.hly_top.addWidget(self.pbn_refresh)
+        self.hly_top.addStretch(1)
+        self.hly_top.setSpacing(4)
+
+        self.vly_right.addWidget(self.stackedWidget)
+        self.vly_right.setSpacing(2)
+        self.hBoxLayout.addLayout(self.vly_right, stretch=1)
 
 
-
-class MainWindow(MSFluentWindow):
+class MainWindow(CHMSFluentWindow):
 
     def __init__(self):
         super().__init__()
@@ -97,33 +107,15 @@ class MainWindow(MSFluentWindow):
              r"F:/Chrome/GoogleEmails/User Data"]
         ]
         self.userdata_model = UserDataListModel(userdata_info, self)
-
+        self.cmbx_browsers.setModel(self.userdata_model)
         self.init_window()
-        # self.setTitleBar(CustomTitleBar(self))
 
-        # ========= Shared Widgets ============
-        # self.pbn_refresh = PushButton(self)
-        # self.pbn_refresh.setText("刷新当前数据")
-        # self.pbn_refresh.setMinimumWidth(100)
-        #
-        # self.cmbx_browsers = ModelComboBox(self)
-        # self.cmbx_browsers.setMinimumWidth(150)
-        # self.cmbx_browsers.setModel(self.userdata_model)
-
-        # ========= End Shared Widgets ============
-
-        self.profile_interface = ProfilesInterface(
+        self.profile_interface = ProfilesTable(
             name='profile',
-            # refresh_button=self.pbn_refresh,
-            # browsers_combobox=self.cmbx_browsers,
-            browsers=self.userdata_model,
             parent=self
         )
-        self.extension_interface = ExtensionsInterface(
+        self.extension_interface = ExtensionsTable(
             name='extension',
-            browsers=self.userdata_model,
-            # refresh_button=self.pbn_refresh,
-            # browsers_combobox=self.cmbx_browsers,
             parent=self
         )
         self.bookmark_interface = Widget("Bookmark Interface", self)
@@ -136,15 +128,12 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.config_interface, get_icon_path("config"), "配置", position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.settings_interface, Fi.SETTING, "设置", position=NavigationItemPosition.BOTTOM)
 
-        self.profile_interface.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
-        self.extension_interface.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
+        self.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
 
-        self.profile_interface.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
-        self.extension_interface.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
+        self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
 
         if self.userdata_model.rowCount() > 0:
-            self.profile_interface.cmbx_browsers.setCurrentIndex(0)
-            self.extension_interface.cmbx_browsers.setCurrentIndex(0)
+            self.cmbx_browsers.setCurrentIndex(0)
 
     def init_window(self):
         setTheme(Theme.LIGHT)
@@ -156,13 +145,13 @@ class MainWindow(MSFluentWindow):
         self.move(width // 2 - self.width() // 2, height // 2 - self.height() // 2)
 
     def update_all_data(self, chrom_ins: ChromInstance, browser: str, exec_path: str):
-        self.profile_interface.trv_m.update_model(
+        self.profile_interface.update_model(
             browser,
             chrom_ins.profiles,
             chrom_ins.userdata_dir,
             exec_path,
         )
-        self.extension_interface.trv_m.update_model(
+        self.extension_interface.update_model(
             chrom_ins.extensions,
             chrom_ins.profiles,
             chrom_ins.userdata_dir,

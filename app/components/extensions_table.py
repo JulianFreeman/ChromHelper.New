@@ -70,6 +70,7 @@ class ExtensionsTable(TreeView):
 
     def __init__(
             self,
+            name: str,
             extensions: dict[str, Extension] = None,
             profiles: dict[str, Profile] = None,
             userdata_dir: str = "",
@@ -78,6 +79,7 @@ class ExtensionsTable(TreeView):
             parent=None
     ):
         super().__init__(parent)
+        self.setObjectName(name.replace(" ", "-"))
         self.extensions = extensions or {}
         self.profiles = profiles or {}
         self.userdata_dir = userdata_dir
@@ -121,6 +123,7 @@ class ExtensionsTable(TreeView):
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
+        self.scrollDelagate = None
 
     def on_act_delete_triggered(self):
         ext_ids = [index.data(Qt.ItemDataRole.UserRole)
@@ -209,37 +212,19 @@ class ExtensionsTable(TreeView):
 
         self.setColumnWidth(0, 250)
 
-
-class ExtensionsInterface(QWidget):
-
-    def __init__(
-            self,
-            name: str,
-            browsers: QAbstractListModel,
-            # refresh_button: PushButton,
-            # browsers_combobox: ModelComboBox,
-            parent: QWidget = None
-    ):
-        super().__init__(parent)
-        self.setObjectName(name.replace(" ", "-"))
-
-        self.vly_m = QVBoxLayout()
-        self.setLayout(self.vly_m)
-
-        self.hly_top = QHBoxLayout()
-        self.vly_m.addLayout(self.hly_top)
-
-        self.pbn_refresh = PushButton(self)
-        self.pbn_refresh.setText("刷新当前数据")
-        self.pbn_refresh.setMinimumWidth(100)
-
-        self.cmbx_browsers = ModelComboBox(self)
-        self.cmbx_browsers.setMinimumWidth(150)
-        self.cmbx_browsers.setModel(browsers)
-
-        self.hly_top.addWidget(self.cmbx_browsers)
-        self.hly_top.addWidget(self.pbn_refresh)
-        self.hly_top.addStretch(1)
-
-        self.trv_m = ExtensionsTable(parent=self)
-        self.vly_m.addWidget(self.trv_m)
+#
+# class ExtensionsInterface(QWidget):
+#
+#     def __init__(
+#             self,
+#             name: str,
+#             parent: QWidget = None
+#     ):
+#         super().__init__(parent)
+#         self.setObjectName(name.replace(" ", "-"))
+#
+#         self.vly_m = QVBoxLayout()
+#         self.setLayout(self.vly_m)
+#
+#         self.trv_m = ExtensionsTable(parent=self)
+#         self.vly_m.addWidget(self.trv_m)
