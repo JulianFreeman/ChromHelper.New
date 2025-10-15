@@ -13,6 +13,7 @@ from app.common import resources
 from app.components.profiles_table import ProfilesTable
 from app.components.extensions_table import ExtensionsTable
 from app.components.bookmarks_table import BookmarksTable
+from app.components.config_interface import ConfigInterface
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
 from app.common.utils import get_icon_path
@@ -67,8 +68,11 @@ class CHMSFluentWindow(MSFluentWindow):
         super().__init__()
         self.vly_right = QVBoxLayout()
 
+        self.wg_top = QWidget(self)
         self.hly_top = QHBoxLayout()
-        self.vly_right.addLayout(self.hly_top)
+        # self.vly_right.addLayout(self.hly_top)
+        self.wg_top.setLayout(self.hly_top)
+        self.hly_top.setContentsMargins(0, 0, 0, 0)
 
         self.pbn_refresh = PushButton(self)
         self.pbn_refresh.setText("刷新当前数据")
@@ -82,9 +86,17 @@ class CHMSFluentWindow(MSFluentWindow):
         self.hly_top.addStretch(1)
         self.hly_top.setSpacing(4)
 
+        self.vly_right.addWidget(self.wg_top)
         self.vly_right.addWidget(self.stackedWidget)
         self.vly_right.setSpacing(2)
         self.hBoxLayout.addLayout(self.vly_right, stretch=1)
+
+    def switchTo(self, interface: QWidget):
+        super().switchTo(interface)
+        if interface.property("is_bottom"):
+            self.wg_top.setHidden(True)
+        else:
+            self.wg_top.setHidden(False)
 
 
 class MainWindow(CHMSFluentWindow):
@@ -114,8 +126,10 @@ class MainWindow(CHMSFluentWindow):
         self.profile_interface = ProfilesTable(name='profile', parent=self)
         self.extension_interface = ExtensionsTable(name='extension', parent=self)
         self.bookmark_interface = BookmarksTable(name='bookmark', parent=self)
-        self.config_interface = Widget("Config Interface", self)
+        self.config_interface = ConfigInterface(name="config", parent=self)
+        self.config_interface.setProperty("is_bottom", True)
         self.settings_interface = Widget("Settings Interface", self)
+        self.settings_interface.setProperty("is_bottom", True)
 
         self.addSubInterface(self.profile_interface, get_icon_path("profile"), "用户")
         self.addSubInterface(self.extension_interface, get_icon_path("extension"), "插件")
@@ -124,7 +138,6 @@ class MainWindow(CHMSFluentWindow):
         self.addSubInterface(self.settings_interface, Fi.SETTING, "设置", position=NavigationItemPosition.BOTTOM)
 
         self.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
-
         self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
 
         if self.userdata_model.rowCount() > 0:

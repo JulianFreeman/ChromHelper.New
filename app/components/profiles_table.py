@@ -127,7 +127,8 @@ class ProfilesTable(TreeView):
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
-        # self.scrollDelagate = None
+        self.scrollDelagate = None
+
 
     def on_act_open_triggered(self):
         open_profiles(self, self.selectedIndexes(), self.exec_path, self.userdata_dir)
@@ -161,20 +162,3 @@ class ProfilesTable(TreeView):
         self.profiles_model.update_data(browser, profiles)
 
         self.setColumnWidth(1, 250)
-
-
-# class ProfilesInterface(QWidget):
-#
-#     def __init__(
-#             self,
-#             name: str,
-#             parent: QWidget = None
-#     ):
-#         super().__init__(parent)
-#         self.setObjectName(name.replace(" ", "-"))
-#
-#         self.vly_m = QVBoxLayout()
-#         self.setLayout(self.vly_m)
-#
-#         self.trv_m = ProfilesTable(parent=self)
-#         self.vly_m.addWidget(self.trv_m)
