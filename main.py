@@ -12,6 +12,7 @@ from qfluentwidgets import FluentIcon as Fi
 from app.common import resources
 from app.components.profiles_table import ProfilesTable
 from app.components.extensions_table import ExtensionsTable
+from app.components.bookmarks_table import BookmarksTable
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
 from app.common.utils import get_icon_path
@@ -110,15 +111,9 @@ class MainWindow(CHMSFluentWindow):
         self.cmbx_browsers.setModel(self.userdata_model)
         self.init_window()
 
-        self.profile_interface = ProfilesTable(
-            name='profile',
-            parent=self
-        )
-        self.extension_interface = ExtensionsTable(
-            name='extension',
-            parent=self
-        )
-        self.bookmark_interface = Widget("Bookmark Interface", self)
+        self.profile_interface = ProfilesTable(name='profile', parent=self)
+        self.extension_interface = ExtensionsTable(name='extension', parent=self)
+        self.bookmark_interface = BookmarksTable(name='bookmark', parent=self)
         self.config_interface = Widget("Config Interface", self)
         self.settings_interface = Widget("Settings Interface", self)
 
@@ -158,13 +153,13 @@ class MainWindow(CHMSFluentWindow):
             exec_path,
             chrom_ins.delete_extensions,
         )
-        # self.tab_bookmarks.update_model(
-        #     chrom_ins.bookmarks,
-        #     chrom_ins.profiles,
-        #     chrom_ins.userdata_dir,
-        #     exec_path,
-        #     chrom_ins.delete_bookmarks,
-        # )
+        self.bookmark_interface.update_model(
+            chrom_ins.bookmarks,
+            chrom_ins.profiles,
+            chrom_ins.userdata_dir,
+            exec_path,
+            chrom_ins.delete_bookmarks,
+        )
 
     def _update_chrom_ins_map(self, name: str, data_path: str):
         # 这个函数不涉及 UI 操作，避免在子线程运行时出问题
