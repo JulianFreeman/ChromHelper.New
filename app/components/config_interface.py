@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
 from qfluentwidgets import (
     CardWidget, IconWidget, BodyLabel, CaptionLabel, TransparentToolButton,
-    setFont, ScrollArea, SmoothMode
+    setFont, ScrollArea, SmoothMode, PrimaryPushButton, PushButton
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.common.utils import get_icon_path
@@ -22,7 +22,9 @@ class UserDataCard(CardWidget):
         self.title_label = BodyLabel(name, self)
         setFont(self.title_label, 18)
         self.exec_label = CaptionLabel(exec_path, self)
+        self.exec_label.setTextColor("#606060", "#d2d2d2")
         self.data_label = CaptionLabel(data_path, self)
+        self.data_label.setTextColor("#606060", "#d2d2d2")
         self.close_button = TransparentToolButton(Fi.CLOSE, self)
 
         self.hBoxLayout = QHBoxLayout(self)
@@ -50,11 +52,10 @@ class UserDataCard(CardWidget):
         # self.moreButton.clicked.connect(self.onMoreButtonClicked)
 
 
-class ConfigInterface(ScrollArea):
+class UserDataCardList(ScrollArea):
 
-    def __init__(self, name: str, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName(name.replace(" ", "-"))
 
         userdata_info = [
             ["Chrome", "chrome",
@@ -103,3 +104,31 @@ class ConfigInterface(ScrollArea):
     def add_card(self, name: str, type_: str, exec_path: str, data_path: str):
         card = UserDataCard(name, type_, exec_path, data_path, self)
         self.vly_wg.addWidget(card, alignment=Qt.AlignmentFlag.AlignTop)
+
+
+class ConfigInterface(QWidget):
+
+    def __init__(self, name: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName(name.replace(" ", "-"))
+
+        self.vly_m = QVBoxLayout()
+        self.setLayout(self.vly_m)
+
+        self.hly_top = QHBoxLayout()
+        self.hly_top.setContentsMargins(11, 0, 11, 0)
+        self.pbn_add = PrimaryPushButton(self)
+        self.pbn_add.setText("添加")
+        self.pbn_add.setIcon(Fi.ADD)
+
+        self.pbn_reset = PushButton(self)
+        self.pbn_reset.setText("重置")
+        self.pbn_reset.setIcon(Fi.UPDATE)
+        self.hly_top.addWidget(self.pbn_add)
+        self.hly_top.addStretch(1)
+        self.hly_top.addWidget(self.pbn_reset)
+
+        self.vly_m.addLayout(self.hly_top)
+        self.cards = UserDataCardList(self)
+        self.vly_m.addWidget(self.cards)
+

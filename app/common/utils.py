@@ -16,6 +16,8 @@ icons_map = {
     "bookmark": ":/images/icons/bookmark_32.png",
     "config": ":/images/icons/config_32.png",
     "none": ":/images/icons/none_128.png",
+    "settings": ":/images/icons/settings_32.png",
+    "debug": ":/images/icons/debug_32.png",
 
     "chrome_avatars": {
         "IDR_PROFILE_AVATAR_27": ":/images/avatars/chrome/IDR_PROFILE_AVATAR_27.png",

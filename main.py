@@ -76,6 +76,7 @@ class CHMSFluentWindow(MSFluentWindow):
 
         self.pbn_refresh = PushButton(self)
         self.pbn_refresh.setText("刷新当前数据")
+        self.pbn_refresh.setIcon(Fi.UPDATE)
         self.pbn_refresh.setMinimumWidth(100)
 
         self.cmbx_browsers = ModelComboBox(self)
@@ -128,14 +129,17 @@ class MainWindow(CHMSFluentWindow):
         self.bookmark_interface = BookmarksTable(name='bookmark', parent=self)
         self.config_interface = ConfigInterface(name="config", parent=self)
         self.config_interface.setProperty("is_bottom", True)
-        self.settings_interface = Widget("Settings Interface", self)
+        self.settings_interface = Widget("settings", parent=self)
         self.settings_interface.setProperty("is_bottom", True)
+        self.debug_interface = Widget("debug", parent=self)
+        self.debug_interface.setProperty("is_bottom", True)
 
         self.addSubInterface(self.profile_interface, get_icon_path("profile"), "用户")
         self.addSubInterface(self.extension_interface, get_icon_path("extension"), "插件")
         self.addSubInterface(self.bookmark_interface, get_icon_path("bookmark"), "书签")
         self.addSubInterface(self.config_interface, get_icon_path("config"), "配置", position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.settings_interface, Fi.SETTING, "设置", position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.debug_interface, get_icon_path("debug"), "输出", position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settings_interface, get_icon_path("settings"), "设置", position=NavigationItemPosition.BOTTOM)
 
         self.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
         self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
