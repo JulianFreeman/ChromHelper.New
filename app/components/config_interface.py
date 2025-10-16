@@ -7,13 +7,28 @@ from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel, Signal
 from PySide6.QtGui import QIcon
 from qfluentwidgets import (
     CardWidget, IconWidget, BodyLabel, CaptionLabel, TransparentToolButton,
-    setFont, ScrollArea, SmoothMode, PrimaryPushButton, PushButton, MessageBoxBase,
-    ModelComboBox, LineEdit, TeachingTip, InfoBarIcon, TeachingTipTailPosition
+    setFont, ScrollArea, PrimaryPushButton, PushButton, MessageBoxBase,
+    ModelComboBox, LineEdit, TeachingTip, InfoBarIcon, TeachingTipTailPosition,
+    FluentIconBase,
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.common.utils import get_icon_path, SUPPORTED_BROWSERS, accept_warning
 from app.chromy import get_browser_exec_path, get_browser_data_path
 from app.database.db_operations import DBManger
+
+
+class TTButtonWithItem(TransparentToolButton):
+
+    clicked_with_item = Signal(object)
+
+    def __init__(self, item: object, icon: str | QIcon | FluentIconBase, parent: QWidget = None):
+        super().__init__(parent)
+        self.setIcon(icon)
+        self.item = item
+        self.clicked.connect(self.on_self_clicked)
+
+    def on_self_clicked(self):
+        self.clicked_with_item.emit(self.item)
 
 
 class IconListModel(QAbstractListModel):
@@ -39,7 +54,6 @@ class UserDataAddDialog(MessageBoxBase):
     def __init__(self, exists_names: list[str], parent: QWidget = None):
         super().__init__(parent)
         self.exists_names = exists_names
-        # self.setWindowTitle("添加用户数据")
 
         self.cw = QWidget(self)
         self.vly_m = QVBoxLayout()
@@ -85,31 +99,18 @@ class UserDataAddDialog(MessageBoxBase):
         self.hly_data.addWidget(self.lne_data)
         self.hly_data.addWidget(self.pbn_data)
 
-        # self.hly_bot = QHBoxLayout()
-        # self.vly_m.addLayout(self.hly_bot)
-        # self.pbn_save = QPushButton("保存", self)
-        # self.pbn_cancel = QPushButton("取消", self)
-        # self.hly_bot.addStretch(1)
-        # self.hly_bot.addWidget(self.pbn_save)
-        # self.hly_bot.addWidget(self.pbn_cancel)
-
-        # self.vly_m.addStretch(1)
         self.viewLayout.addWidget(self.cw)
 
         self.yesButton.setText("保存")
         self.cancelButton.setText("取消")
 
-        # self.resize(640, 120)
         self.widget.setMinimumWidth(800)
 
-        # self.yesButton.clicked.connect(self.on_pbn_save_clicked)
-        # self.cancelButton.clicked.connect(self.on_pbn_cancel_clicked)
         self.cmbx_icons.currentIndexChanged.connect(self.on_cmbx_icons_current_index_changed)
         self.pbn_exec.clicked.connect(self.on_pbn_exec_clicked)
         self.pbn_data.clicked.connect(self.on_pbn_data_clicked)
 
         # 手动触发一次
-        # self.on_cmbx_icons_current_index_changed(0)
         self.cmbx_icons.setCurrentIndex(0)
 
     def on_cmbx_icons_current_index_changed(self, index: int):
@@ -157,7 +158,6 @@ class UserDataAddDialog(MessageBoxBase):
 
     def validate(self):
         if len(self.lne_name.text()) == 0:
-            # QMessageBox.critical(self, "错误", "名称不能为空！")
             TeachingTip.create(
                 target=self.lne_name,
                 title="错误",
@@ -170,7 +170,6 @@ class UserDataAddDialog(MessageBoxBase):
             )
             return False
         if len(self.lne_data.text()) == 0:
-            # QMessageBox.critical(self, "错误", "用户路径不能为空！")
             TeachingTip.create(
                 target=self.lne_data,
                 title="错误",
@@ -187,7 +186,6 @@ class UserDataAddDialog(MessageBoxBase):
             return False
 
         if self.lne_name.text() in self.exists_names:
-            # QMessageBox.critical(self, "错误", "该名称已存在，请更换一个。")
             TeachingTip.create(
                 target=self.lne_name,
                 title="错误",
@@ -222,7 +220,7 @@ class UserDataCard(CardWidget):
         self.exec_label.setTextColor("#606060", "#d2d2d2")
         self.data_label = CaptionLabel(data_path, self)
         self.data_label.setTextColor("#606060", "#d2d2d2")
-        self.close_button = TransparentToolButton(Fi.CLOSE, self)
+        self.close_button = TTButtonWithItem(self, Fi.CLOSE, self)
 
         self.hBoxLayout = QHBoxLayout(self)
         self.vBoxLayout = QVBoxLayout()
@@ -246,7 +244,6 @@ class UserDataCard(CardWidget):
         self.hBoxLayout.addWidget(self.close_button, 0, Qt.AlignmentFlag.AlignRight)
 
         self.close_button.setFixedSize(48, 48)
-        # self.moreButton.clicked.connect(self.onMoreButtonClicked)
 
 
 class UserDataCardList(ScrollArea):
@@ -269,12 +266,11 @@ class UserDataCardList(ScrollArea):
 
         self.enableTransparentBackground()
         self.setWidgetResizable(True)
-        # self.setSmoothMode(SmoothMode.NO_SMOOTH, Qt.Orientation.Vertical)
-        # self.setSmoothMode(SmoothMode.NO_SMOOTH, Qt.Orientation.Horizontal)
 
     def add_card(self, name: str, type_: str, exec_path: str, data_path: str):
         card = UserDataCard(name, type_, exec_path, data_path, self)
         self.vly_wg.addWidget(card, alignment=Qt.AlignmentFlag.AlignTop)
+        card.close_button.clicked_with_item.connect(self.remove_card)
         self.cards.append(card)
 
     def remove_card(self, card: UserDataCard):
@@ -287,7 +283,7 @@ class UserDataCardList(ScrollArea):
 
 class ConfigInterface(QWidget):
 
-    userdata_changed = Signal(bool)  # bool 的作用是告诉是否是 reset
+    userdata_changed = Signal(bool)  # bool 的作用是告诉是否包含移除
 
     def __init__(self, name: str, dbm: DBManger, parent=None):
         super().__init__(parent)
@@ -335,14 +331,13 @@ class ConfigInterface(QWidget):
             self.dbm.insert_one(name, type_, exec_path, data_path)
             self.userdata_changed.emit(False)
 
-
     def on_pbn_reset_clicked(self):
         # 下面的函数会触发信号，所以这里就不触发了
         self.reset_cards()
 
     def on_card_removed(self, card: UserDataCard):
         self.dbm.delete_one(card.name)
-        self.userdata_changed.emit(False)
+        self.userdata_changed.emit(True)
 
     def reset_cards(self, is_init: bool = False):
         # 清空卡片
