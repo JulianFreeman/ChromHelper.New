@@ -228,8 +228,17 @@ def get_icon_path(icon_name: str, sub_dir: str = None) -> str:
 def accept_warning(widget: QWidget, condition: bool,
                    caption: str = "Warning", text: str = "Are you sure to continue?") -> bool:
     if condition:
-        # b = QMessageBox.question(widget, caption, text)
         mb = MessageBox(caption, text, widget)
         if not mb.exec():
             return True
     return False
+
+
+def show_quick_tip(widget: QWidget, caption: str, text: str):
+    mb = MessageBox(caption, text, widget)
+    mb.cancelButton.setHidden(True)
+    mb.buttonLayout.insertStretch(0, 1)
+    mb.buttonLayout.setStretch(1, 0)
+    mb.yesButton.setMinimumWidth(100)
+    mb.setClosableOnMaskClicked(True)
+    mb.exec()

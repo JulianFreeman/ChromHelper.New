@@ -1,11 +1,12 @@
 from typing import Callable
 
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSortFilterProxyModel
-from PySide6.QtGui import QAction, QFont
-from PySide6.QtWidgets import QMenu, QMessageBox, QTreeView, QVBoxLayout, QWidget
-from qfluentwidgets import TreeView
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QTreeView, QWidget
+from qfluentwidgets import TreeView, RoundMenu, Action
+from qfluentwidgets import FluentIcon as Fi
 
-from app.common.utils import  accept_warning
+from app.common.utils import  accept_warning, show_quick_tip
 from app.chromy.chromi import Bookmark, Profile, sort_profiles_id_func, ProfileSortFilterProxyModel
 # from .da_show_profiles import DaShowProfiles, ShowProfilesModel
 
@@ -77,13 +78,12 @@ class BookmarksTable(TreeView):
         self.exec_path = exec_path
         self.delete_func = delete_func
 
-        # self.menu_ctx = QMenu(self)
-        # self.act_check = QAction("查看用户", self)
-        # self.act_delete = QAction("删除", self)
-        # self.menu_ctx.addAction(self.act_check)
-        # self.menu_ctx.addAction(self.act_delete)
+        self.menu_ctx = RoundMenu(parent=self)
+        self.act_check = Action(icon=Fi.SEARCH, text="查看用户", parent=self)
+        self.act_delete = Action(icon=Fi.DELETE, text="删除", parent=self)
+        self.menu_ctx.addAction(self.act_check)
+        self.menu_ctx.addAction(self.act_delete)
 
-        # self.trv_m = QTreeView(self)
         self.setIndentation(0)
         self.setSortingEnabled(True)
         self.sortByColumn(0, Qt.SortOrder.AscendingOrder)
@@ -96,10 +96,10 @@ class BookmarksTable(TreeView):
 
         self.setModel(proxy_model)
 
-        self.doubleClicked.connect(self.on_trv_m_double_clicked)
-        # self.act_check.triggered.connect(self.on_act_check_triggered)
-        # self.act_delete.triggered.connect(self.on_act_delete_triggered)
-        # self.customContextMenuRequested.connect(self.on_trv_m_custom_context_menu_requested)
+        self.doubleClicked.connect(self.on_double_clicked)
+        self.act_check.triggered.connect(self.on_act_check_triggered)
+        self.act_delete.triggered.connect(self.on_act_delete_triggered)
+        self.customContextMenuRequested.connect(self.on_custom_context_menu_requested)
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
@@ -110,7 +110,7 @@ class BookmarksTable(TreeView):
                 for index in self.selectedIndexes()
                 if index.column() == 0]
         if len(urls) == 0:
-            QMessageBox.warning(self, "警告", "你没有选中任何书签。")
+            show_quick_tip(self, "警告", "你没有选中任何书签。")
             return
 
         profile_ids = set()
@@ -128,15 +128,15 @@ class BookmarksTable(TreeView):
 
     def on_act_check_triggered(self):
         if len(self.selectedIndexes()) == 0:
-            QMessageBox.warning(self, "提示", "你没有选中任何书签。")
+            show_quick_tip(self, "提示", "你没有选中任何书签。")
             return
         index = self.selectedIndexes()[0]
-        self.on_trv_m_double_clicked(index)
+        self.on_double_clicked(index)
 
-    # def on_trv_m_custom_context_menu_requested(self, pos: QPoint):
-    #     self.menu_ctx.exec(self.viewport().mapToGlobal(pos))
+    def on_custom_context_menu_requested(self, pos: QPoint):
+        self.menu_ctx.exec(self.viewport().mapToGlobal(pos))
 
-    def on_trv_m_double_clicked(self, index: QModelIndex):
+    def on_double_clicked(self, index: QModelIndex):
         url: str = index.data(Qt.ItemDataRole.UserRole)
         bmk = self.bookmarks[url]
 

@@ -7,9 +7,12 @@ from os import PathLike
 from pathlib import Path
 from PySide6.QtCore import Qt, QModelIndex, QSortFilterProxyModel
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QMessageBox, QWidget
+from PySide6.QtWidgets import QWidget
 
-from app.common.utils import  get_with_chained_keys, path_not_exist, get_icon_path
+from app.common.utils import (
+    get_with_chained_keys, path_not_exist, get_icon_path,
+    show_quick_tip
+)
 from app.common.logger import FakeLogger
 
 from app.common.icons import (
@@ -467,12 +470,12 @@ def open_profiles(
         userdata_dir: str,
 ):
     if path_not_exist(exec_path):
-        QMessageBox.critical(widget, "错误", "没有找到执行文件路径，请检查配置页。")
+        show_quick_tip(widget, "错误", "没有找到执行文件路径，请检查配置页。")
         return
 
     profile_ids = [index.data(Qt.ItemDataRole.DisplayRole) for index in indexes if index.column() == 0]
     if len(profile_ids) == 0:
-        QMessageBox.warning(widget, "提示", "你没有选中任何用户。")
+        show_quick_tip(widget, "提示", "你没有选中任何用户。")
         return
 
     cmd = rf'"{exec_path}" --user-data-dir="{userdata_dir}" --profile-directory="{{0}}"'

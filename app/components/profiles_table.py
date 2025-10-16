@@ -1,16 +1,17 @@
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize, QAbstractListModel
-from PySide6.QtGui import QAction, QFont, QIcon
-from PySide6.QtWidgets import QMenu, QMessageBox, QTreeView, QVBoxLayout, QWidget, QHBoxLayout
-from qfluentwidgets import TreeView, ModelComboBox, PushButton
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QTreeView, QWidget
+from qfluentwidgets import TreeView, ModelComboBox, PushButton, RoundMenu, Action
+from qfluentwidgets import FluentIcon as Fi
 
 from app.chromy.structs import Profile
-
 from app.chromy.chromi import (
     sort_profiles_id_func,
     ProfileSortFilterProxyModel,
     open_profiles,
     get_profile_picture,
 )
+from app.common.utils import show_quick_tip
 # from .da_raw_data import DaRawData
 
 
@@ -92,25 +93,18 @@ class ProfilesTable(TreeView):
         self.userdata_dir = userdata_dir
         self.exec_path = exec_path
 
-        # self.menu_ctx = QMenu(self)
-        # self.act_open = QAction("打开", self)
-        # self.act_show_data = QAction("查看原始数据", self)
-        # self.menu_ctx.addAction(self.act_open)
-        # self.menu_ctx.addSeparator()
-        # self.menu_ctx.addAction(self.act_show_data)
+        self.menu_ctx = RoundMenu(parent=self)
+        self.act_open = Action(icon=Fi.LINK, text="打开", parent=self)
+        self.act_show_data = Action(icon=Fi.DICTIONARY, text="查看原始数据", parent=self)
+        self.menu_ctx.addAction(self.act_open)
+        self.menu_ctx.addSeparator()
+        self.menu_ctx.addAction(self.act_show_data)
 
-        # self.vly_m = QVBoxLayout()
-        # self.setLayout(self.vly_m)
-
-        # self.trv_m = QTreeView(self)
         self.setIndentation(0)
         self.setSortingEnabled(True)
         self.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.setUniformRowHeights(True)
-        # self.setStyleSheet("QTreeView::item { height: 40px; }")
         self.setIconSize(QSize(32, 32))
-
-        # self.vly_m.addWidget(self.trv_m)
 
         self.profiles_model = ProfilesModel(browser, self.profiles, self)
 
@@ -121,14 +115,13 @@ class ProfilesTable(TreeView):
 
         self.setSelectionMode(QTreeView.SelectionMode.ExtendedSelection)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        # self.act_open.triggered.connect(self.on_act_open_triggered)
-        # self.act_show_data.triggered.connect(self.on_act_show_data_triggered)
-        # self.customContextMenuRequested.connect(self.on_trv_m_custom_context_menu_requested)
+        self.act_open.triggered.connect(self.on_act_open_triggered)
+        self.act_show_data.triggered.connect(self.on_act_show_data_triggered)
+        self.customContextMenuRequested.connect(self.on_custom_context_menu_requested)
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
         self.scrollDelagate = None
-
 
     def on_act_open_triggered(self):
         open_profiles(self, self.selectedIndexes(), self.exec_path, self.userdata_dir)
@@ -138,15 +131,15 @@ class ProfilesTable(TreeView):
                        for index in self.selectedIndexes()
                        if index.column() == 0]
         if len(profile_ids) == 0:
-            QMessageBox.warning(self, "提示", "你没有选中任何用户。")
+            show_quick_tip(self, "提示", "你没有选中任何用户。")
             return
         # 只取第一个用户的
         profile = self.profiles[profile_ids[0]]
         # dr = DaRawData(profile.raw_data, self)
         # dr.show()
 
-    # def on_trv_m_custom_context_menu_requested(self, pos: QPoint):
-    #     self.menu_ctx.exec(self.viewport().mapToGlobal(pos))
+    def on_custom_context_menu_requested(self, pos: QPoint):
+        self.menu_ctx.exec(self.viewport().mapToGlobal(pos))
 
     def update_model(
             self,
