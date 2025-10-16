@@ -1,35 +1,23 @@
+from logging import Logger
 from PySide6.QtWidgets import (
-    QApplication, QFrame, QHBoxLayout, QWidget, QVBoxLayout
+    QApplication, QHBoxLayout, QWidget, QVBoxLayout
 )
-from PySide6.QtGui import QIcon, QFont
+from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel
 from qfluentwidgets import (
-    MSFluentWindow, SubtitleLabel, setFont, NavigationItemPosition,
-    PushButton, MessageBox, ModelComboBox, setTheme, Theme
+    MSFluentWindow, NavigationItemPosition,
+    PushButton, ModelComboBox, setTheme, Theme
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.components.profiles_table import ProfilesTable
 from app.components.extensions_table import ExtensionsTable
 from app.components.bookmarks_table import BookmarksTable
 from app.components.config_interface import ConfigInterface
+from app.components.debug_interface import DebugInterface
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
 from app.common.utils import get_icon_path
-from app.common.logger import FakeLogger
 from app.database.db_operations import DBManger
-
-
-class Widget(QFrame):
-
-    def __init__(self, text: str, parent=None):
-        super().__init__(parent=parent)
-        self.label = SubtitleLabel(text, self)
-        self.hBoxLayout = QHBoxLayout(self)
-
-        setFont(self.label, 24)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.hBoxLayout.addWidget(self.label, 1, Qt.AlignmentFlag.AlignCenter)
-        self.setObjectName(text.replace(' ', '-'))
 
 
 class UserDataListModel(QAbstractListModel):
@@ -101,9 +89,9 @@ class CHMSFluentWindow(MSFluentWindow):
 
 class MainWindow(CHMSFluentWindow):
 
-    def __init__(self):
+    def __init__(self, logger: Logger):
         super().__init__()
-        self.logger = FakeLogger()
+        self.logger = logger
         self.dbm = DBManger()
         self.chrom_ins_map: dict[str, ChromInstance] = {}
 
@@ -117,9 +105,7 @@ class MainWindow(CHMSFluentWindow):
         self.bookmark_interface = BookmarksTable(name='bookmark', parent=self)
         self.config_interface = ConfigInterface(name="config", dbm=self.dbm, parent=self)
         self.config_interface.setProperty("is_bottom", True)
-        self.settings_interface = Widget("settings", parent=self)
-        self.settings_interface.setProperty("is_bottom", True)
-        self.debug_interface = Widget("debug", parent=self)
+        self.debug_interface = DebugInterface(name="debug", logger=logger, parent=self)
         self.debug_interface.setProperty("is_bottom", True)
 
         self.addSubInterface(self.profile_interface, get_icon_path("profile"), "用户")
@@ -127,7 +113,6 @@ class MainWindow(CHMSFluentWindow):
         self.addSubInterface(self.bookmark_interface, get_icon_path("bookmark"), "书签")
         self.addSubInterface(self.config_interface, get_icon_path("config"), "配置", position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.debug_interface, get_icon_path("debug"), "输出", position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.settings_interface, get_icon_path("settings"), "设置", position=NavigationItemPosition.BOTTOM)
 
         self.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
         self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
@@ -140,7 +125,6 @@ class MainWindow(CHMSFluentWindow):
         setTheme(Theme.LIGHT)
         self.resize(1000, 760)
         self.setWindowIcon(QIcon(":/images/logo.png"))
-        self.setWindowTitle("浏览器助手")
         desktop = QApplication.screens()[0].availableGeometry()
         width, height = desktop.width(), desktop.height()
         self.move(width // 2 - self.width() // 2, height // 2 - self.height() // 2)
