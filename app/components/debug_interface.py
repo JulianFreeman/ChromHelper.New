@@ -41,3 +41,7 @@ class DebugInterface(TextEdit):
         for text in DEBUG_OUTPUT_CACHE:
             self.append(text)
         self.moveCursor(self.textCursor().MoveOperation.End)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.moveCursor(self.textCursor().MoveOperation.End)
