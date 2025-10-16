@@ -9,7 +9,7 @@ from qfluentwidgets import FluentIcon as Fi
 from app.common.utils import accept_warning, get_icon_path, show_quick_tip
 from app.common.utils import path_not_exist
 from app.components.profiles_dialog import ShowProfilesDialog, ShowProfilesModel
-# from .da_raw_data import DaRawData
+from app.components.rawdata_dialog import RawDataDialog
 from app.chromy.chromi import (
     Extension, Profile,
     sort_profiles_id_func,
@@ -149,8 +149,8 @@ class ExtensionsTable(TreeView):
             return
         # 只取第一个用户的
         extension = self.extensions[extension_ids[0]]
-        # dr = DaRawData(extension.raw_data, self)
-        # dr.show()
+        dr = RawDataDialog(extension.raw_data, self)
+        dr.show()
 
     def on_act_check_triggered(self):
         if len(self.selectedIndexes()) == 0:

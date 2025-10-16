@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QTreeView, QWidget
-from qfluentwidgets import TreeView, RoundMenu, Action
+from qfluentwidgets import TreeView, RoundMenu, Action, SmoothMode
 from qfluentwidgets import FluentIcon as Fi
 
 from app.chromy.structs import Profile
@@ -12,7 +12,7 @@ from app.chromy.chromi import (
     get_profile_picture,
 )
 from app.common.utils import show_quick_tip
-# from .da_raw_data import DaRawData
+from app.components.rawdata_dialog import RawDataDialog
 
 
 class ProfilesModel(QAbstractTableModel):
@@ -118,10 +118,14 @@ class ProfilesTable(TreeView):
         self.act_open.triggered.connect(self.on_act_open_triggered)
         self.act_show_data.triggered.connect(self.on_act_show_data_triggered)
         self.customContextMenuRequested.connect(self.on_custom_context_menu_requested)
+        self.doubleClicked.connect(self.on_double_clicked)
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
-        self.scrollDelagate = None
+        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
+
+    def on_double_clicked(self, _):
+        open_profiles(self, self.selectedIndexes(), self.exec_path, self.userdata_dir)
 
     def on_act_open_triggered(self):
         open_profiles(self, self.selectedIndexes(), self.exec_path, self.userdata_dir)
@@ -135,8 +139,8 @@ class ProfilesTable(TreeView):
             return
         # 只取第一个用户的
         profile = self.profiles[profile_ids[0]]
-        # dr = DaRawData(profile.raw_data, self)
-        # dr.show()
+        dr = RawDataDialog(profile.raw_data, self)
+        dr.show()
 
     def on_custom_context_menu_requested(self, pos: QPoint):
         self.menu_ctx.exec(self.viewport().mapToGlobal(pos))

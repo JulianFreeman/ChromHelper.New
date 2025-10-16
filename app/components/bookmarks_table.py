@@ -3,7 +3,7 @@ from typing import Callable
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSortFilterProxyModel
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QTreeView, QWidget
-from qfluentwidgets import TreeView, RoundMenu, Action
+from qfluentwidgets import TreeView, RoundMenu, Action, SmoothMode
 from qfluentwidgets import FluentIcon as Fi
 
 from app.common.utils import  accept_warning, show_quick_tip, get_icon_path
@@ -103,7 +103,7 @@ class BookmarksTable(TreeView):
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
-        self.scrollDelagate = None
+        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
 
     def on_act_delete_triggered(self):
         urls = [index.data(Qt.ItemDataRole.UserRole)

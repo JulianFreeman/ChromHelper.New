@@ -128,6 +128,7 @@ class MainWindow(CHMSFluentWindow):
         desktop = QApplication.screens()[0].availableGeometry()
         width, height = desktop.width(), desktop.height()
         self.move(width // 2 - self.width() // 2, height // 2 - self.height() // 2)
+        self.setMicaEffectEnabled(False)
 
     def update_all_data(self, chrom_ins: ChromInstance, browser: str, exec_path: str):
         self.profile_interface.update_model(

@@ -77,6 +77,7 @@ class ShowProfilesDialog(MessageBoxBase):
         self.userdata_dir = userdata_dir
         self.exec_path = exec_path
         self.delete_func = delete_func
+        self.setClosableOnMaskClicked(True)
 
         self.cw = QWidget(self)
         self.vly_m = QVBoxLayout()
@@ -107,7 +108,7 @@ class ShowProfilesDialog(MessageBoxBase):
         self.cancelButton.setMinimumWidth(80)
 
         self.viewLayout.addWidget(self.cw)
-        self.widget.setMinimumWidth(600)
+        self.widget.setMinimumSize(600, 540)
 
         self.pbn_open.clicked.connect(self.on_pbn_open_clicked)
         self.pbn_delete.clicked.connect(self.on_pbn_delete_clicked)
