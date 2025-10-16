@@ -106,7 +106,6 @@ class UserDataAddDialog(MessageBoxBase):
         self.viewLayout.addWidget(self.cw)
 
         self.yesButton.setText("保存")
-        self.cancelButton.setText("取消")
         self.buttonLayout.insertStretch(0, 3)
 
         self.widget.setMinimumWidth(800)

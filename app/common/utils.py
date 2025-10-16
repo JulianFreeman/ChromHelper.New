@@ -229,8 +229,6 @@ def accept_warning(widget: QWidget, condition: bool,
                    caption: str = "警告", text: str = "你确定要继续吗？") -> bool:
     if condition:
         mb = MessageBox(caption, text, widget)
-        mb.yesButton.setText("是")
-        mb.cancelButton.setText("否")
         if not mb.exec():
             return True
     return False
@@ -238,7 +236,6 @@ def accept_warning(widget: QWidget, condition: bool,
 
 def show_quick_tip(widget: QWidget, caption: str, text: str):
     mb = MessageBox(caption, text, widget)
-    mb.yesButton.setText("好的")
     mb.cancelButton.setHidden(True)
     mb.buttonLayout.insertStretch(0, 1)
     mb.buttonLayout.setStretch(1, 0)

@@ -98,7 +98,6 @@ class ShowProfilesDialog(MessageBoxBase):
         self.pbn_open = PrimaryPushButton("打开", self.cw)
 
         self.yesButton.hide()
-        self.cancelButton.setText("取消")
         self.buttonLayout.insertWidget(0, self.pbn_delete, alignment=Qt.AlignmentFlag.AlignLeft)
         self.buttonLayout.insertStretch(1, 1)
         self.buttonLayout.insertWidget(2, self.pbn_open, alignment=Qt.AlignmentFlag.AlignLeft)

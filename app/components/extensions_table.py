@@ -16,6 +16,7 @@ from app.chromy.chromi import (
     sort_profiles_id_func,
     ProfileSortFilterProxyModel,
 )
+from app.common.config import cfg
 
 
 class ExtensionsModel(QAbstractTableModel):
@@ -118,7 +119,7 @@ class ExtensionsTable(TreeView):
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
-        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
+        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(cfg.get(cfg.smooth_mode))
 
     def on_act_delete_triggered(self):
         ext_ids = [index.data(Qt.ItemDataRole.UserRole)

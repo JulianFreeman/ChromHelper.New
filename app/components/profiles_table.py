@@ -13,6 +13,7 @@ from app.chromy.chromi import (
 )
 from app.common.utils import show_quick_tip
 from app.components.rawdata_dialog import RawDataDialog
+from app.common.config import cfg
 
 
 class ProfilesModel(QAbstractTableModel):
@@ -122,7 +123,7 @@ class ProfilesTable(TreeView):
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
-        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
+        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(cfg.get(cfg.smooth_mode))
 
     def on_double_clicked(self, _):
         open_profiles(self, self.selectedIndexes(), self.exec_path, self.userdata_dir)

@@ -6,7 +6,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel, QSize
 from qfluentwidgets import (
     MSFluentWindow, NavigationItemPosition,
-    PushButton, ModelComboBox, setTheme, Theme, SplashScreen
+    PushButton, ModelComboBox, setTheme, Theme, SplashScreen, SystemThemeListener
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.components.profiles_table import ProfilesTable
@@ -14,9 +14,11 @@ from app.components.extensions_table import ExtensionsTable
 from app.components.bookmarks_table import BookmarksTable
 from app.components.config_interface import ConfigInterface
 from app.components.debug_interface import DebugInterface
+from app.components.settings_interface import SettingsInterface
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
 from app.common.utils import get_icon_path
+from app.common.config import cfg
 from app.database.db_operations import DBManger
 
 
@@ -93,6 +95,7 @@ class MainWindow(CHMSFluentWindow):
         self.logger = logger
         self.dbm = DBManger()
         self.chrom_ins_map: dict[str, ChromInstance] = {}
+        self.theme_listener = SystemThemeListener(self)
 
         userdata_info = self.dbm.select_all()
         self.userdata_model = UserDataListModel(userdata_info, self)
@@ -103,14 +106,17 @@ class MainWindow(CHMSFluentWindow):
         self.bookmark_interface = BookmarksTable(name='bookmark', parent=self)
         self.config_interface = ConfigInterface(name="config", dbm=self.dbm, parent=self)
         self.debug_interface = DebugInterface(name="debug", logger=logger, parent=self)
+        self.settings_interface = SettingsInterface(name="settings", parent=self)
         self.config_interface.setProperty("is_bottom", True)
         self.debug_interface.setProperty("is_bottom", True)
+        self.settings_interface.setProperty("is_bottom", True)
 
         self.addSubInterface(self.profile_interface, get_icon_path("profile"), "用户")
         self.addSubInterface(self.extension_interface, get_icon_path("extension"), "插件")
         self.addSubInterface(self.bookmark_interface, get_icon_path("bookmark"), "书签")
         self.addSubInterface(self.config_interface, get_icon_path("config"), "配置", position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.debug_interface, get_icon_path("debug"), "输出", position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settings_interface, get_icon_path("settings"), "设置", position=NavigationItemPosition.BOTTOM)
 
         self.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
         self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
@@ -131,12 +137,19 @@ class MainWindow(CHMSFluentWindow):
             self.cmbx_browsers.setCurrentIndex(0)
 
         self.splash.finish()
+        self.theme_listener.start()
+
         self.post_init_window(width, height)
 
+    def closeEvent(self, event):
+        self.theme_listener.terminate()
+        self.theme_listener.deleteLater()
+        super().closeEvent(event)
+
     def post_init_window(self, width: int, height: int):
-        setTheme(Theme.LIGHT)
+        setTheme(cfg.theme)
         self.setMicaEffectEnabled(False)
-        self.stackedWidget.setAnimationEnabled(False)
+        self.stackedWidget.setAnimationEnabled(cfg.get(cfg.switch_animation))
         self.resize_and_move_to_center(width, height)
 
     def resize_and_move_to_center(self, width: int, height: int):

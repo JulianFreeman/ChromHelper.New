@@ -10,6 +10,7 @@ from app.common.utils import  accept_warning, show_quick_tip, get_icon_path
 from app.chromy.chromi import Bookmark, Profile, sort_profiles_id_func, ProfileSortFilterProxyModel
 from app.components.profiles_dialog import ShowProfilesDialog, ShowProfilesModel
 from app.common.thread import run_some_task
+from app.common.config import cfg
 
 
 class BookmarksModel(QAbstractTableModel):
@@ -105,7 +106,7 @@ class BookmarksTable(TreeView):
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
-        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
+        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(cfg.get(cfg.smooth_mode))
 
     def on_act_delete_triggered(self):
         urls = [index.data(Qt.ItemDataRole.UserRole)

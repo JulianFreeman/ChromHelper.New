@@ -4,6 +4,8 @@ from PySide6.QtCore import Qt, QAbstractItemModel, QModelIndex, QObject
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 from qfluentwidgets import MessageBoxBase, TreeView, SmoothMode
 
+from app.common.config import cfg
+
 
 # 以下两个类生成自 ChatGPT，并做了修改
 class DictTreeItem(object):
@@ -117,7 +119,7 @@ class RawDataDialog(MessageBoxBase):
         self.cw.setLayout(self.vly_m)
 
         self.trv_m = TreeView(self.cw)
-        self.trv_m.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
+        self.trv_m.scrollDelagate.verticalSmoothScroll.setSmoothMode(cfg.get(cfg.smooth_mode))
         self.vly_m.addWidget(self.trv_m)
 
         self.model = RawDataModel(data, parent=self)
