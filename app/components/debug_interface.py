@@ -25,6 +25,7 @@ class DebugInterface(TextEdit):
     def __init__(self, name: str, logger: Logger, parent=None):
         super().__init__(parent)
         self.setObjectName(name.replace(" ", "-"))
+        self.setReadOnly(True)
         self.logger = logger
         self.formatter = Formatter("%(asctime)s - %(levelname)s - %(message)s")
 

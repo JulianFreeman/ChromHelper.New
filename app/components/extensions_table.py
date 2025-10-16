@@ -1,14 +1,14 @@
 from typing import Callable
 
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize, QSortFilterProxyModel, QAbstractListModel
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize, QSortFilterProxyModel
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QTreeView
-from qfluentwidgets import TreeView, RoundMenu, Action
+from qfluentwidgets import TreeView, RoundMenu, Action, SmoothMode
 from qfluentwidgets import FluentIcon as Fi
 
 from app.common.utils import accept_warning, get_icon_path, show_quick_tip
 from app.common.utils import path_not_exist
-# from .da_show_profiles import DaShowProfiles, ShowProfilesModel
+from app.components.profiles_dialog import ShowProfilesDialog, ShowProfilesModel
 # from .da_raw_data import DaRawData
 from app.chromy.chromi import (
     Extension, Profile,
@@ -117,7 +117,7 @@ class ExtensionsTable(TreeView):
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
-        self.scrollDelagate = None
+        self.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
 
     def on_act_delete_triggered(self):
         ext_ids = [index.data(Qt.ItemDataRole.UserRole)
@@ -173,18 +173,18 @@ class ExtensionsTable(TreeView):
             profile = self.profiles[profile_id]
             show_profiles.append([profile.id, profile.name, ""])
 
-        # model = ShowProfilesModel(show_profiles, self)
-        # proxy_model = ProfileSortFilterProxyModel(self)
-        # proxy_model.setSourceModel(model)
-        #
-        # ds = DaShowProfiles(self.userdata_dir, self.exec_path, self.delete_func, self)
-        # ds.setWindowTitle(ext.name)
-        # ds.setWindowIcon(QIcon(ext.icon))
-        # ds.lne_mark.setText(ext.id)
-        # ds.trv_p.setModel(proxy_model)
-        #
-        # ds.deletion_finished.connect(self.update_after_deletion)
-        # get_exec(ds)()
+        model = ShowProfilesModel(show_profiles, self)
+        proxy_model = ProfileSortFilterProxyModel(self)
+        proxy_model.setSourceModel(model)
+
+        ds = ShowProfilesDialog(
+            ext.name, ext.icon, ext.id,
+            self.userdata_dir, self.exec_path, self.delete_func, self
+        )
+        ds.trv_p.setModel(proxy_model)
+
+        ds.deletion_finished.connect(self.update_after_deletion)
+        ds.exec()
 
     def update_after_deletion(self):
         self.extensions_model.update_data(self.extensions)

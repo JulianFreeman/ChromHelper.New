@@ -6,9 +6,9 @@ from PySide6.QtWidgets import QTreeView, QWidget
 from qfluentwidgets import TreeView, RoundMenu, Action
 from qfluentwidgets import FluentIcon as Fi
 
-from app.common.utils import  accept_warning, show_quick_tip
+from app.common.utils import  accept_warning, show_quick_tip, get_icon_path
 from app.chromy.chromi import Bookmark, Profile, sort_profiles_id_func, ProfileSortFilterProxyModel
-# from .da_show_profiles import DaShowProfiles, ShowProfilesModel
+from app.components.profiles_dialog import ShowProfilesDialog, ShowProfilesModel
 
 
 class BookmarksModel(QAbstractTableModel):
@@ -147,17 +147,18 @@ class BookmarksTable(TreeView):
             profile = self.profiles[profile_id]
             show_profiles.append([profile.id, profile.name, bmk.profiles[profile_id]])
 
-        # model = ShowProfilesModel(show_profiles, self)
-        # proxy_model = ProfileSortFilterProxyModel(self)
-        # proxy_model.setSourceModel(model)
-        #
-        # ds = DaShowProfiles(self.userdata_dir, self.exec_path, self.delete_func, self)
-        # ds.setWindowTitle(bmk.name)
-        # ds.lne_mark.setText(bmk.url)
-        # ds.trv_p.setModel(proxy_model)
-        #
-        # ds.deletion_finished.connect(self.update_after_deletion)
-        # ds.exec()
+        model = ShowProfilesModel(show_profiles, self)
+        proxy_model = ProfileSortFilterProxyModel(self)
+        proxy_model.setSourceModel(model)
+
+        ds = ShowProfilesDialog(
+            bmk.name, get_icon_path("bookmark"), bmk.url,
+            self.userdata_dir, self.exec_path, self.delete_func, self
+        )
+        ds.trv_p.setModel(proxy_model)
+
+        ds.deletion_finished.connect(self.update_after_deletion)
+        ds.exec()
 
     def update_after_deletion(self):
         self.bookmarks_model.update_data(self.bookmarks)

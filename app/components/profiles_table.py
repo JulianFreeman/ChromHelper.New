@@ -1,7 +1,7 @@
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize, QAbstractListModel
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QTreeView, QWidget
-from qfluentwidgets import TreeView, ModelComboBox, PushButton, RoundMenu, Action
+from qfluentwidgets import TreeView, RoundMenu, Action
 from qfluentwidgets import FluentIcon as Fi
 
 from app.chromy.structs import Profile

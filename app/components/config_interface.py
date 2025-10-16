@@ -68,41 +68,46 @@ class UserDataAddDialog(MessageBoxBase):
         self.vly_m.addLayout(self.hly_exec)
         self.vly_m.addLayout(self.hly_data)
 
-        self.lb_icon = CaptionLabel("图　　　　标", self)
-        self.cmbx_icons = ModelComboBox(self)
+        self.lb_icon = BodyLabel("图　　　　标", self.cw)
+        self.cmbx_icons = ModelComboBox(self.cw)
         self.cmbx_icons.setMinimumWidth(150)
-        self.icon_model = IconListModel(self)
+        self.icon_model = IconListModel(self.cw)
         self.cmbx_icons.setModel(self.icon_model)
 
         self.hly_icon.addWidget(self.lb_icon)
         self.hly_icon.addStretch(1)
         self.hly_icon.addWidget(self.cmbx_icons)
 
-        self.lb_name = CaptionLabel("名　　　　称", self)
-        self.lne_name = LineEdit(self)
+        self.lb_name = BodyLabel("名　　　　称", self.cw)
+        self.lne_name = LineEdit(self.cw)
         self.lne_name.setMinimumWidth(150)
         self.hly_name.addWidget(self.lb_name)
         self.hly_name.addStretch(1)
         self.hly_name.addWidget(self.lne_name)
 
-        self.lb_exec = CaptionLabel("执行文件路径", self)
-        self.lne_exec = LineEdit(self)
-        self.pbn_exec = PushButton("选择", self)
+        self.lb_exec = BodyLabel("执行文件路径", self.cw)
+        self.lne_exec = LineEdit(self.cw)
+        self.pbn_exec = PushButton("选择", self.cw)
+        self.pbn_exec.setMinimumWidth(80)
         self.hly_exec.addWidget(self.lb_exec)
         self.hly_exec.addWidget(self.lne_exec)
         self.hly_exec.addWidget(self.pbn_exec)
+        self.hly_exec.setSpacing(8)
 
-        self.lb_data = CaptionLabel("用户数据路径", self)
-        self.lne_data = LineEdit(self)
-        self.pbn_data = PushButton("选择", self)
+        self.lb_data = BodyLabel("用户数据路径", self.cw)
+        self.lne_data = LineEdit(self.cw)
+        self.pbn_data = PushButton("选择", self.cw)
+        self.pbn_data.setMinimumWidth(80)
         self.hly_data.addWidget(self.lb_data)
         self.hly_data.addWidget(self.lne_data)
         self.hly_data.addWidget(self.pbn_data)
+        self.hly_data.setSpacing(8)
 
         self.viewLayout.addWidget(self.cw)
 
         self.yesButton.setText("保存")
         self.cancelButton.setText("取消")
+        self.buttonLayout.insertStretch(0, 3)
 
         self.widget.setMinimumWidth(800)
 
@@ -177,7 +182,7 @@ class UserDataAddDialog(MessageBoxBase):
                 icon=InfoBarIcon.ERROR,
                 isClosable=True,
                 duration=2000,
-                tailPosition=TeachingTipTailPosition.RIGHT,
+                tailPosition=TeachingTipTailPosition.BOTTOM,
                 parent=self,
             )
             return False
