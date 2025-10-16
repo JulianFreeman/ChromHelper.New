@@ -114,7 +114,12 @@ class ChromInstance(object):
                     # 可能是些内部的插件，但是路径有问题
                     continue
 
-                manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+                try:
+                    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+                except json.JSONDecodeError:
+                    self.logger.error(f'[READ] [{manifest_file}] is not valid JSON')
+                    continue
+
                 icon_parent_path = Path(ext_path)
             else:
                 # 可能是一些内部插件，没有完整信息，就不管了
@@ -218,7 +223,8 @@ class ChromInstance(object):
             bookmark_file = profile_dir / "Bookmarks"
             if not bookmark_file.is_file():
                 # 如果一个浏览器没有书签，那么该文件就不存在
-                self.logger.warning(f'[READ] [{bookmark_file}] is not a file or does not exist')
+                # 太多了，烦人，不要了
+                # self.logger.warning(f'[READ] [{bookmark_file}] is not a file or does not exist')
                 continue
             profile.bookmark_file = str(bookmark_file)
 
