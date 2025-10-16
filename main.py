@@ -109,20 +109,6 @@ class MainWindow(CHMSFluentWindow):
         self.dbm = DBManger()
         self.chrom_ins_map: dict[str, ChromInstance] = {}
 
-        # userdata_info = [
-        #     ["Chrome", "chrome",
-        #      r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        #      r"C:\Users\Julian\AppData\Local\Google\Chrome\User Data"],
-        #     ["Edge", "edge",
-        #      r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        #      r"C:\Users\Julian\AppData\Local\Microsoft\Edge\User Data"],
-        #     ["Brave", "brave",
-        #      r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-        #      r"C:\Users\Julian\AppData\Local\BraveSoftware\Brave-Browser\User Data"],
-        #     ["邮箱汇总", "chrome",
-        #      r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        #      r"F:/Chrome/GoogleEmails/User Data"]
-        # ]
         userdata_info = self.dbm.select_all()
         self.userdata_model = UserDataListModel(userdata_info, self)
         self.cmbx_browsers.setModel(self.userdata_model)
@@ -147,6 +133,7 @@ class MainWindow(CHMSFluentWindow):
 
         self.pbn_refresh.clicked.connect(self.on_pbn_refresh_clicked)
         self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
+        self.config_interface.userdata_changed.connect(self.on_config_userdata_changed)
 
         if self.userdata_model.rowCount() > 0:
             self.cmbx_browsers.setCurrentIndex(0)
@@ -204,6 +191,11 @@ class MainWindow(CHMSFluentWindow):
     def on_cmbx_browsers_current_index_changed(self, index: int):
         index = self.cmbx_browsers.model().createIndex(index, 1)
         self.update_by_one_index(index, force=False)
+
+    def on_config_userdata_changed(self, is_reset: bool):
+        self.userdata_model.update_model(self.dbm.select_all())
+        if is_reset and self.userdata_model.rowCount() > 0:
+            self.cmbx_browsers.setCurrentIndex(0)
 
 
 def main():

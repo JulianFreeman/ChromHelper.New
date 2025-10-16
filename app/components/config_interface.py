@@ -39,7 +39,7 @@ class UserDataAddDialog(MessageBoxBase):
     def __init__(self, exists_names: list[str], parent: QWidget = None):
         super().__init__(parent)
         self.exists_names = exists_names
-        self.setWindowTitle("添加用户数据")
+        # self.setWindowTitle("添加用户数据")
 
         self.cw = QWidget(self)
         self.vly_m = QVBoxLayout()
@@ -102,8 +102,8 @@ class UserDataAddDialog(MessageBoxBase):
         # self.resize(640, 120)
         self.widget.setMinimumWidth(800)
 
-        self.yesButton.clicked.connect(self.on_pbn_save_clicked)
-        self.cancelButton.clicked.connect(self.on_pbn_cancel_clicked)
+        # self.yesButton.clicked.connect(self.on_pbn_save_clicked)
+        # self.cancelButton.clicked.connect(self.on_pbn_cancel_clicked)
         self.cmbx_icons.currentIndexChanged.connect(self.on_cmbx_icons_current_index_changed)
         self.pbn_exec.clicked.connect(self.on_pbn_exec_clicked)
         self.pbn_data.clicked.connect(self.on_pbn_data_clicked)
@@ -155,10 +155,7 @@ class UserDataAddDialog(MessageBoxBase):
 
         self.lne_data.setText(dirname)
 
-    def on_pbn_cancel_clicked(self):
-        self.reject()
-
-    def on_pbn_save_clicked(self):
+    def validate(self):
         if len(self.lne_name.text()) == 0:
             # QMessageBox.critical(self, "错误", "名称不能为空！")
             TeachingTip.create(
@@ -168,10 +165,10 @@ class UserDataAddDialog(MessageBoxBase):
                 icon=InfoBarIcon.ERROR,
                 isClosable=True,
                 duration=2000,
-                tailPosition=TeachingTipTailPosition.TOP,
+                tailPosition=TeachingTipTailPosition.RIGHT,
                 parent=self,
             )
-            return
+            return False
         if len(self.lne_data.text()) == 0:
             # QMessageBox.critical(self, "错误", "用户路径不能为空！")
             TeachingTip.create(
@@ -181,13 +178,13 @@ class UserDataAddDialog(MessageBoxBase):
                 icon=InfoBarIcon.ERROR,
                 isClosable=True,
                 duration=2000,
-                tailPosition=TeachingTipTailPosition.TOP,
+                tailPosition=TeachingTipTailPosition.RIGHT,
                 parent=self,
             )
-            return
+            return False
         if accept_warning(self, len(self.lne_exec.text()) == 0, "警告",
                           "如果执行文件路径为空，不影响查看，但无法打开浏览器窗口，要继续吗？"):
-            return
+            return False
 
         if self.lne_name.text() in self.exists_names:
             # QMessageBox.critical(self, "错误", "该名称已存在，请更换一个。")
@@ -198,12 +195,12 @@ class UserDataAddDialog(MessageBoxBase):
                 icon=InfoBarIcon.ERROR,
                 isClosable=True,
                 duration=2000,
-                tailPosition=TeachingTipTailPosition.TOP,
+                tailPosition=TeachingTipTailPosition.RIGHT,
                 parent=self,
             )
-            return
+            return False
 
-        self.accept()
+        return True
 
 
 class UserDataCard(CardWidget):
@@ -260,33 +257,6 @@ class UserDataCardList(ScrollArea):
         super().__init__(parent)
         self.dbm = dbm
         self.cards: list[UserDataCard] = []
-        # 这里无所谓，后面 reset 的时候会填充这个数据，所以此时为空就行
-        # self.userdata_info = []  # [[name, type, exec, data]]
-        #     # ["Chrome", "chrome",
-        #     #  r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        #     #  r"C:\Users\Julian\AppData\Local\Google\Chrome\User Data"],
-        #     # ["Edge", "edge",
-        #     #  r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        #     #  r"C:\Users\Julian\AppData\Local\Microsoft\Edge\User Data"],
-        #     # ["Brave", "brave",
-        #     #  r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-        #     #  r"C:\Users\Julian\AppData\Local\BraveSoftware\Brave-Browser\User Data"],
-        #     # ["邮箱汇总", "chrome",
-        #     #  r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        #     #  r"F:/Chrome/GoogleEmails/User Data"],
-        #     # ["Chrome", "chrome",
-        #     #  r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        #     #  r"C:\Users\Julian\AppData\Local\Google\Chrome\User Data"],
-        #     # ["Edge", "edge",
-        #     #  r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        #     #  r"C:\Users\Julian\AppData\Local\Microsoft\Edge\User Data"],
-        #     # ["Brave", "brave",
-        #     #  r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-        #     #  r"C:\Users\Julian\AppData\Local\BraveSoftware\Brave-Browser\User Data"],
-        #     # ["邮箱汇总", "chrome",
-        #     #  r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        #     #  r"F:/Chrome/GoogleEmails/User Data"],
-        # ]
 
         self.cw = QWidget(self)
         self.setWidget(self.cw)
@@ -296,9 +266,6 @@ class UserDataCardList(ScrollArea):
 
         self.vly_wg.setSpacing(6)
         self.vly_wg.setAlignment(Qt.AlignmentFlag.AlignTop)
-
-        # for name, type_, exec_path, data_path in userdata_info:
-        #     self.add_card(name, type_, exec_path, data_path)
 
         self.enableTransparentBackground()
         self.setWidgetResizable(True)
@@ -320,7 +287,7 @@ class UserDataCardList(ScrollArea):
 
 class ConfigInterface(QWidget):
 
-    userdata_changed = Signal()
+    userdata_changed = Signal(bool)  # bool 的作用是告诉是否是 reset
 
     def __init__(self, name: str, dbm: DBManger, parent=None):
         super().__init__(parent)
@@ -358,13 +325,16 @@ class ConfigInterface(QWidget):
 
     def on_pbn_add_clicked(self):
         exists_names = [c.name for c in self.card_list.cards]
-        # cards_ly = self.cards.vly_wg
-        # for i in range(cards_ly.count()):
-        #     card = cards_ly.itemAt(i)  # type: UserDataCard
-        #     exists_names.append(card.name)
-
         mb = UserDataAddDialog(exists_names, self)
-        mb.exec()
+        if mb.exec():
+            name = mb.lne_name.text()
+            type_ = mb.cmbx_icons.currentText()
+            exec_path = mb.lne_exec.text()
+            data_path = mb.lne_data.text()
+            self.card_list.add_card(name, type_, exec_path, data_path)
+            self.dbm.insert_one(name, type_, exec_path, data_path)
+            self.userdata_changed.emit(False)
+
 
     def on_pbn_reset_clicked(self):
         # 下面的函数会触发信号，所以这里就不触发了
@@ -372,7 +342,7 @@ class ConfigInterface(QWidget):
 
     def on_card_removed(self, card: UserDataCard):
         self.dbm.delete_one(card.name)
-        self.userdata_changed.emit()
+        self.userdata_changed.emit(False)
 
     def reset_cards(self, is_init: bool = False):
         # 清空卡片
@@ -388,11 +358,7 @@ class ConfigInterface(QWidget):
         self.userdata_info = self.dbm.select_all()
         # 填充卡片
         for name, type_, exec_path, data_path in self.userdata_info:
-            # card = UserDataCard(name, type_, exec_path, data_path, self)
-            # card.set_exec_path(userdata[2])
-            # card.set_data_path(userdata[3])
-
             self.card_list.add_card(name, type_, exec_path, data_path)
 
-        self.userdata_changed.emit()
+        self.userdata_changed.emit(True)
 
