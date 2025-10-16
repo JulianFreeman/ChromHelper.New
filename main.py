@@ -18,6 +18,7 @@ from app.chromy import ChromInstance
 from app.common.thread import run_some_task
 from app.common.utils import get_icon_path
 from app.common.logger import FakeLogger
+from app.database.db_operations import DBManger
 
 
 class Widget(QFrame):
@@ -105,21 +106,24 @@ class MainWindow(CHMSFluentWindow):
     def __init__(self):
         super().__init__()
         self.logger = FakeLogger()
+        self.dbm = DBManger()
         self.chrom_ins_map: dict[str, ChromInstance] = {}
-        userdata_info = [
-            ["Chrome", "chrome",
-             r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-             r"C:\Users\Julian\AppData\Local\Google\Chrome\User Data"],
-            ["Edge", "edge",
-             r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-             r"C:\Users\Julian\AppData\Local\Microsoft\Edge\User Data"],
-            ["Brave", "brave",
-             r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-             r"C:\Users\Julian\AppData\Local\BraveSoftware\Brave-Browser\User Data"],
-            ["邮箱汇总", "chrome",
-             r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-             r"F:/Chrome/GoogleEmails/User Data"]
-        ]
+
+        # userdata_info = [
+        #     ["Chrome", "chrome",
+        #      r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        #      r"C:\Users\Julian\AppData\Local\Google\Chrome\User Data"],
+        #     ["Edge", "edge",
+        #      r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        #      r"C:\Users\Julian\AppData\Local\Microsoft\Edge\User Data"],
+        #     ["Brave", "brave",
+        #      r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+        #      r"C:\Users\Julian\AppData\Local\BraveSoftware\Brave-Browser\User Data"],
+        #     ["邮箱汇总", "chrome",
+        #      r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        #      r"F:/Chrome/GoogleEmails/User Data"]
+        # ]
+        userdata_info = self.dbm.select_all()
         self.userdata_model = UserDataListModel(userdata_info, self)
         self.cmbx_browsers.setModel(self.userdata_model)
         self.init_window()
@@ -127,7 +131,7 @@ class MainWindow(CHMSFluentWindow):
         self.profile_interface = ProfilesTable(name='profile', parent=self)
         self.extension_interface = ExtensionsTable(name='extension', parent=self)
         self.bookmark_interface = BookmarksTable(name='bookmark', parent=self)
-        self.config_interface = ConfigInterface(name="config", parent=self)
+        self.config_interface = ConfigInterface(name="config", dbm=self.dbm, parent=self)
         self.config_interface.setProperty("is_bottom", True)
         self.settings_interface = Widget("settings", parent=self)
         self.settings_interface.setProperty("is_bottom", True)
