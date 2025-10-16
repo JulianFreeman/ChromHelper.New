@@ -126,7 +126,6 @@ class RawDataDialog(MessageBoxBase):
         self.viewLayout.addWidget(self.cw)
         self.trv_m.setColumnWidth(0, 300)
 
-        # self.widget.setMinimumWidth(800)
         self.widget.setMinimumSize(800, 640)
 
         self.buttonLayout.insertStretch(0, 4)

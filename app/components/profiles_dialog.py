@@ -13,6 +13,7 @@ from qfluentwidgets import (
 
 from app.common.utils import accept_warning, show_quick_tip
 from app.chromy.chromi import open_profiles
+from app.common.thread import run_some_task
 
 
 class ShowProfilesModel(QAbstractTableModel):
@@ -113,9 +114,6 @@ class ShowProfilesDialog(MessageBoxBase):
         self.pbn_open.clicked.connect(self.on_pbn_open_clicked)
         self.pbn_delete.clicked.connect(self.on_pbn_delete_clicked)
 
-    def on_pbn_cancel_clicked(self):
-        self.reject()
-
     def on_pbn_open_clicked(self):
         open_profiles(self, self.trv_p.selectedIndexes(), self.exec_path, self.userdata_dir)
 
@@ -130,8 +128,7 @@ class ShowProfilesDialog(MessageBoxBase):
                           f"你确定删除这 {len(profile_ids_to_delete)} 个吗？"):
             return
 
-        # run_some_task("提示", "正在删除，请稍等……", self,
-        #               self.delete_func, [self.lne_mark.text()], profile_ids_to_delete)
-        self.delete_func([self.id_], profile_ids_to_delete)
+        run_some_task("正在删除，请稍等……", self,
+                      self.delete_func, [self.id_], profile_ids_to_delete)
         self.deletion_finished.emit()
         self.accept()

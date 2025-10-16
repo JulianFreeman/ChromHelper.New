@@ -361,4 +361,3 @@ class ConfigInterface(QWidget):
             self.card_list.add_card(name, type_, exec_path, data_path)
 
         self.userdata_changed.emit(True)
-

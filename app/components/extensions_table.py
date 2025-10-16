@@ -8,6 +8,7 @@ from qfluentwidgets import FluentIcon as Fi
 
 from app.common.utils import accept_warning, get_icon_path, show_quick_tip
 from app.common.utils import path_not_exist
+from app.common.thread import run_some_task
 from app.components.profiles_dialog import ShowProfilesDialog, ShowProfilesModel
 from app.components.rawdata_dialog import RawDataDialog
 from app.chromy.chromi import (
@@ -135,9 +136,8 @@ class ExtensionsTable(TreeView):
                           f"你确定要删除这 {len(ext_ids)} 个插件吗？"):
             return
 
-        # run_some_task("提示", "正在删除，请稍等……", self,
-        #               self.delete_func, ext_ids, profile_ids)
-        self.delete_func(ext_ids, profile_ids)
+        run_some_task("正在删除，请稍等……", self,
+                      self.delete_func, ext_ids, profile_ids)
         self.update_after_deletion()
 
     def on_act_show_data_triggered(self):

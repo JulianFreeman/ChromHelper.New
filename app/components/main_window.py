@@ -57,7 +57,6 @@ class CHMSFluentWindow(MSFluentWindow):
 
         self.wg_top = QWidget(self)
         self.hly_top = QHBoxLayout()
-        # self.vly_right.addLayout(self.hly_top)
         self.wg_top.setLayout(self.hly_top)
         self.hly_top.setContentsMargins(0, 0, 0, 0)
 
@@ -98,14 +97,13 @@ class MainWindow(CHMSFluentWindow):
         userdata_info = self.dbm.select_all()
         self.userdata_model = UserDataListModel(userdata_info, self)
         self.cmbx_browsers.setModel(self.userdata_model)
-        self.init_window()
 
         self.profile_interface = ProfilesTable(name='profile', parent=self)
         self.extension_interface = ExtensionsTable(name='extension', parent=self)
         self.bookmark_interface = BookmarksTable(name='bookmark', parent=self)
         self.config_interface = ConfigInterface(name="config", dbm=self.dbm, parent=self)
-        self.config_interface.setProperty("is_bottom", True)
         self.debug_interface = DebugInterface(name="debug", logger=logger, parent=self)
+        self.config_interface.setProperty("is_bottom", True)
         self.debug_interface.setProperty("is_bottom", True)
 
         self.addSubInterface(self.profile_interface, get_icon_path("profile"), "用户")
@@ -121,6 +119,9 @@ class MainWindow(CHMSFluentWindow):
         if self.userdata_model.rowCount() > 0:
             self.cmbx_browsers.setCurrentIndex(0)
 
+        # 放最后，避免出一些问题
+        self.init_window()
+
     def init_window(self):
         setTheme(Theme.LIGHT)
         self.resize(1000, 760)
@@ -129,6 +130,7 @@ class MainWindow(CHMSFluentWindow):
         width, height = desktop.width(), desktop.height()
         self.move(width // 2 - self.width() // 2, height // 2 - self.height() // 2)
         self.setMicaEffectEnabled(False)
+        self.stackedWidget.setAnimationEnabled(False)
 
     def update_all_data(self, chrom_ins: ChromInstance, browser: str, exec_path: str):
         self.profile_interface.update_model(
@@ -164,7 +166,8 @@ class MainWindow(CHMSFluentWindow):
         name = index.data(Qt.ItemDataRole.EditRole)
         type_, exec_path, data_path = index.data(Qt.ItemDataRole.UserRole)
         if force or name not in self.chrom_ins_map:
-            self._update_chrom_ins_map(name, data_path)
+            run_some_task("正在获取浏览器数据……", self,
+                          self._update_chrom_ins_map, name=name, data_path=data_path)
         self.update_all_data(self.chrom_ins_map[name], type_, exec_path)
 
     def on_pbn_refresh_clicked(self):

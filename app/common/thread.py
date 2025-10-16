@@ -1,7 +1,8 @@
 from typing import Callable
-from PySide6.QtCore import Qt, QObject, QSize, QThread
+from PySide6.QtCore import Qt, QObject, QThread
 from PySide6.QtGui import QKeyEvent
-from PySide6.QtWidgets import QDialog, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QWidget
+from qfluentwidgets import MessageBoxBase, BodyLabel
 
 
 class TaskWorker(QThread):
@@ -22,22 +23,13 @@ class TaskWorker(QThread):
         self.func(*self.args, **self.kwargs)
 
 
-class BlockingDialog(QDialog):
+class BlockingDialog(MessageBoxBase):
 
-    def __init__(self, title: str, msg: str, parent: QWidget = None):
+    def __init__(self, msg: str, parent: QWidget = None):
         super().__init__(parent)
-        self.setWindowTitle(title)
-
-        # 设置没有关闭按钮
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
-
-        # 布局和内容
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel(msg, self))
-        self.setLayout(layout)
-
-    def sizeHint(self):
-        return QSize(200, 50)
+        self.viewLayout.addWidget(BodyLabel(msg, self))
+        self.widget.setMinimumWidth(400)
+        self.buttonGroup.hide()
 
     def keyPressEvent(self, event: QKeyEvent):
         # 强制关闭的方法，尽量不要用
@@ -47,9 +39,9 @@ class BlockingDialog(QDialog):
             super().keyPressEvent(event)
 
 
-def run_some_task(title: str, msg: str, parent: QWidget, func: Callable, *args, **kwargs):
+def run_some_task(msg: str, parent: QWidget, func: Callable, *args, **kwargs):
     worker = TaskWorker(parent, func, *args, **kwargs)
-    bda = BlockingDialog(title, msg, parent)
+    bda = BlockingDialog(msg, parent)
     worker.finished.connect(bda.close)
 
     worker.start()

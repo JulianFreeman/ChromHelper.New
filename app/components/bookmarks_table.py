@@ -9,6 +9,7 @@ from qfluentwidgets import FluentIcon as Fi
 from app.common.utils import  accept_warning, show_quick_tip, get_icon_path
 from app.chromy.chromi import Bookmark, Profile, sort_profiles_id_func, ProfileSortFilterProxyModel
 from app.components.profiles_dialog import ShowProfilesDialog, ShowProfilesModel
+from app.common.thread import run_some_task
 
 
 class BookmarksModel(QAbstractTableModel):
@@ -121,9 +122,8 @@ class BookmarksTable(TreeView):
                           f"你确定要删除这 {len(urls)} 个书签吗？"):
             return
 
-        # run_some_task("提示", "正在删除，请稍等……", self,
-        #               self.delete_func, urls, profile_ids)
-        self.delete_func(urls, profile_ids)
+        run_some_task("正在删除，请稍等……", self,
+                      self.delete_func, urls, profile_ids)
         self.update_after_deletion()
 
     def on_act_check_triggered(self):

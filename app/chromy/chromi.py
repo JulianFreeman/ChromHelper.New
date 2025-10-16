@@ -14,13 +14,11 @@ from app.common.utils import (
     show_quick_tip
 )
 from app.common.logger import FakeLogger
-
 from app.common.icons import (
     create_round_icon_from_pixmap, create_mono_icon,
     argb32_to_rgb,
 )
 from app.common.profile_pic import create_profile_pic
-
 from app.chromy.structs import Extension, Bookmark, Profile
 
 
