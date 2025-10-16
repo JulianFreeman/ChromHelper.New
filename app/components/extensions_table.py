@@ -60,8 +60,8 @@ class ExtensionsModel(QAbstractTableModel):
 
     def update_data(self, extensions: dict[str, Extension]):
         self.beginResetModel()
-
-        self.extensions = extensions
+        self.extensions.clear()
+        self.extensions.update(extensions)
         self.extension_ids = list(self.extensions.keys())
 
         self.endResetModel()

@@ -52,8 +52,9 @@ class BookmarksModel(QAbstractTableModel):
 
     def update_data(self, bookmarks: dict[str, Bookmark]):
         self.beginResetModel()
-
-        self.bookmarks = bookmarks
+        # 避免报错
+        self.bookmarks.clear()
+        self.bookmarks.update(bookmarks)
         self.bookmark_urls = list(self.bookmarks.keys())
 
         self.endResetModel()
