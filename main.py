@@ -19,8 +19,10 @@ def main():
     logger.setLevel(logging.INFO)
     sys.excepthook = get_excepthook_for(logger)
 
-    win = MainWindow(logger)
-    win.setWindowTitle(f"{ZH_APP_NAME} {__version__}")
+    win = MainWindow(title=f"{ZH_APP_NAME} {__version__}",
+                     width=1000,
+                     height=760,
+                     logger=logger)
     win.show()
     return app.exec()
 

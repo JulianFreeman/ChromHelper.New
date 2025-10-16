@@ -3,10 +3,10 @@ from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QWidget, QVBoxLayout
 )
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel
+from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel, QSize
 from qfluentwidgets import (
     MSFluentWindow, NavigationItemPosition,
-    PushButton, ModelComboBox, setTheme, Theme
+    PushButton, ModelComboBox, setTheme, Theme, SplashScreen
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.components.profiles_table import ProfilesTable
@@ -88,7 +88,7 @@ class CHMSFluentWindow(MSFluentWindow):
 
 class MainWindow(CHMSFluentWindow):
 
-    def __init__(self, logger: Logger):
+    def __init__(self, title: str, width: int, height: int, logger: Logger):
         super().__init__()
         self.logger = logger
         self.dbm = DBManger()
@@ -116,21 +116,34 @@ class MainWindow(CHMSFluentWindow):
         self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
         self.config_interface.userdata_changed.connect(self.on_config_userdata_changed)
 
+        # ===== prepare for splashscreen ======
+        self.setWindowTitle(title)
+        self.setWindowIcon(QIcon(":/images/logo.png"))
+        self.resize_and_move_to_center(width, height)
+
+        self.splash = SplashScreen(self.windowIcon(), self)
+        self.splash.setIconSize(QSize(102, 102))
+        # 必须要有这个
+        self.show()
+
+        # 如果电脑慢，可能会花点时间
         if self.userdata_model.rowCount() > 0:
             self.cmbx_browsers.setCurrentIndex(0)
 
-        # 放最后，避免出一些问题
-        self.init_window()
+        self.splash.finish()
+        self.post_init_window(width, height)
 
-    def init_window(self):
+    def post_init_window(self, width: int, height: int):
         setTheme(Theme.LIGHT)
-        self.resize(1000, 760)
-        self.setWindowIcon(QIcon(":/images/logo.png"))
-        desktop = QApplication.screens()[0].availableGeometry()
-        width, height = desktop.width(), desktop.height()
-        self.move(width // 2 - self.width() // 2, height // 2 - self.height() // 2)
         self.setMicaEffectEnabled(False)
         self.stackedWidget.setAnimationEnabled(False)
+        self.resize_and_move_to_center(width, height)
+
+    def resize_and_move_to_center(self, width: int, height: int):
+        self.resize(width, height)
+        desktop = QApplication.screens()[0].availableGeometry()
+        w, h = desktop.width(), desktop.height()
+        self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
     def update_all_data(self, chrom_ins: ChromInstance, browser: str, exec_path: str):
         self.profile_interface.update_model(
