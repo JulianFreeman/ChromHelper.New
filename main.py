@@ -7,7 +7,7 @@ from app.common import resources
 from app.common.logger import get_excepthook_for
 from app.components.main_window import MainWindow
 
-__version__ = '4.0.0'
+VERSION = '4.0.1'
 ORG_NAME = "Oranje"
 APP_NAME = "ChromHelper"
 ZH_APP_NAME = "浏览器助手"
@@ -25,7 +25,7 @@ def main():
     logger.setLevel(logging.INFO)
     sys.excepthook = get_excepthook_for(logger)
 
-    win = MainWindow(title=f"{ZH_APP_NAME} {__version__}",
+    win = MainWindow(title=f"{ZH_APP_NAME} {VERSION}",
                      width=1000,
                      height=760,
                      logger=logger)
