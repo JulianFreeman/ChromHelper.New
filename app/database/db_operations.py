@@ -5,9 +5,9 @@ from app.database.Sqlite3Helper import (
     Sqlite3Worker, Column, DataType,
     Operand, Table,
 )
-
 from app.chromy import get_browser_exec_path, get_browser_data_path
 from app.common.utils import SUPPORTED_BROWSERS
+from app.common.config import APP_DIR
 
 
 @dataclass
@@ -27,9 +27,7 @@ U = UserDataTable()
 class DBManger(object):
 
     def __init__(self):
-        # self.app_dir = app_dir
-
-        self.sqh = Sqlite3Worker(str(Path("./userdata.db")))
+        self.sqh = Sqlite3Worker(str(Path(APP_DIR) / "userdata.db"))
         self.sqh.create_table(U.table, U.all, if_not_exists=True)
 
         # 如果数据库为空，则可能是第一次打开，就创建默认的表

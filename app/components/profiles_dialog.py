@@ -14,6 +14,7 @@ from qfluentwidgets import (
 from app.common.utils import accept_warning, show_quick_tip
 from app.chromy.chromi import open_profiles
 from app.common.thread import run_some_task
+from app.common.config import cfg
 
 
 class ShowProfilesModel(QAbstractTableModel):
@@ -92,6 +93,7 @@ class ShowProfilesDialog(MessageBoxBase):
         self.trv_p.setSortingEnabled(True)
         self.trv_p.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.trv_p.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.trv_p.scrollDelagate.verticalSmoothScroll.setSmoothMode(cfg.get(cfg.smooth_mode))
         self.vly_m.addWidget(self.trv_p)
 
         self.pbn_delete = PushButton("删除所选", self.cw)

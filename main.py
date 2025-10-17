@@ -6,11 +6,8 @@ from qfluentwidgets import FluentTranslator
 from app.common import resources
 from app.common.logger import get_excepthook_for
 from app.components.main_window import MainWindow
+from app.common.config import ORG_NAME, APP_NAME, ZH_APP_NAME, VERSION
 
-__version__ = '4.0.0'
-ORG_NAME = "Oranje"
-APP_NAME = "ChromHelper"
-ZH_APP_NAME = "浏览器助手"
 
 
 def main():
@@ -25,7 +22,7 @@ def main():
     logger.setLevel(logging.INFO)
     sys.excepthook = get_excepthook_for(logger)
 
-    win = MainWindow(title=f"{ZH_APP_NAME} {__version__}",
+    win = MainWindow(title=f"{ZH_APP_NAME} {VERSION}",
                      width=1000,
                      height=760,
                      logger=logger)
