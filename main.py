@@ -6,11 +6,8 @@ from qfluentwidgets import FluentTranslator
 from app.common import resources
 from app.common.logger import get_excepthook_for
 from app.components.main_window import MainWindow
+from app.common.config import ORG_NAME, APP_NAME, ZH_APP_NAME, VERSION
 
-VERSION = '4.0.1'
-ORG_NAME = "Oranje"
-APP_NAME = "ChromHelper"
-ZH_APP_NAME = "浏览器助手"
 
 
 def main():

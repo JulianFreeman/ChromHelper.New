@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 from PySide6.QtWidgets import QWidget
 from qfluentwidgets import MessageBox
@@ -223,6 +225,24 @@ def get_icon_path(icon_name: str, sub_dir: str = None) -> str:
     else:
         p = get_with_chained_keys(icons_map, [sub_dir, icon_name])
         return icons_map["none"] if p is None else p
+
+
+def get_log_dir() -> str | None:
+    if sys.platform == "win32":
+        log_dir = Path(os.path.expanduser("~"), "AppData", "Roaming")
+    elif sys.platform == "darwin":
+        log_dir = Path(os.path.expanduser("~"),  "Library", "Application Support")
+    else:
+        return None
+    if not log_dir.exists():
+        log_dir.mkdir(parents=True, exist_ok=True)
+    return str(log_dir)
+
+
+def get_app_dir(org_name: str, app_name: str):
+    app_dir = Path(get_log_dir(), org_name, app_name)
+    app_dir.mkdir(parents=True, exist_ok=True)
+    return str(app_dir)
 
 
 def accept_warning(widget: QWidget, condition: bool,
