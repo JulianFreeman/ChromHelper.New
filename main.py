@@ -9,7 +9,6 @@ from app.components.main_window import MainWindow
 from app.common.config import ORG_NAME, APP_NAME, ZH_APP_NAME, VERSION
 
 
-
 def main():
     app = QApplication(sys.argv)
     app.setOrganizationName(ORG_NAME)

@@ -1,3 +1,4 @@
+import json
 from logging import Logger
 from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QWidget, QVBoxLayout
@@ -21,7 +22,7 @@ from app.chromy import ChromInstance, Extension
 from app.common.thread import run_some_task
 from app.common.api_worker import ApiWorker
 from app.common.utils import get_icon_path, SAFE_MAP_ICON, SafeMark
-from app.common.config import cfg
+from app.common.config import cfg, SENT_CACHE_FILE
 from app.database.db_operations import DBManger
 
 
@@ -125,6 +126,7 @@ class MainWindow(CHMSFluentWindow):
         self.dbm = DBManger()
         self.chrom_ins_map: dict[str, ChromInstance] = {}
         self.ext_safe_marks: dict[str, SafeMark] = {}
+        self.sent_ext_cache: list[str] = self.get_sent_ext()  # 已经发送过的插件 ID
 
         self.theme_listener = SystemThemeListener(self)
 
@@ -195,6 +197,8 @@ class MainWindow(CHMSFluentWindow):
         self.theme_listener.deleteLater()
         self.api_thread.quit()
         self.api_thread.wait()
+        # 保存发送的插件缓存
+        SENT_CACHE_FILE.write_text(json.dumps(self.sent_ext_cache, ensure_ascii=False, indent=4), encoding="utf-8")
         super().closeEvent(event)
 
     def post_init_window(self, width: int, height: int):
@@ -209,12 +213,20 @@ class MainWindow(CHMSFluentWindow):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
+    @staticmethod
+    def get_sent_ext() -> list[str]:
+        try:
+            with open(SENT_CACHE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            return []
+
     def process_ext_safe_marks(self, raw_ext_safe_marks: list[dict]):
         self.ext_safe_marks.clear()
         for e in raw_ext_safe_marks:
             self.ext_safe_marks[e["ID"]] = SafeMark(id=e["ID"], safe=e["SAFE"])
         self.EXT_SAFE_MARK_PROCESS_FINISHED.emit(self.ext_safe_marks)
-        self.logger.info("插件安全标记已更新。")
+        self.logger.info("[API GET] 插件安全标记已更新。")
 
     def prepare_sending_ext(self, ext: dict[str, Extension]):
         # 这里就把所有插件都发了，如果重复服务器就忽略了
@@ -253,7 +265,6 @@ class MainWindow(CHMSFluentWindow):
             exec_path,
             chrom_ins.delete_bookmarks,
         )
-        self.START_SENDING_EXT.emit(chrom_ins.extensions)
 
     def _update_chrom_ins_map(self, name: str, data_path: str):
         # 这个函数不要涉及 UI 操作，避免在子线程运行时出问题
@@ -270,12 +281,24 @@ class MainWindow(CHMSFluentWindow):
             # 只在强制刷新的时候重新拉取一下标记
             # 不能直接调用 do_query_necessary，否则还是会堵塞窗口，要通过信号槽的方法
             self.START_QUERY_EXT_SAFE_MARK.emit()
-            self.logger.info("正在拉取插件安全标记……")
+            self.logger.info("[API GET] 正在拉取插件安全标记……")
             self.IS_INIT = False
 
         if force or name not in self.chrom_ins_map:
             run_some_task("正在获取浏览器数据……", self,
                           self._update_chrom_ins_map, name=name, data_path=data_path)
+
+            # 排除已经发送过的插件，因为不知道联网获取的啥时候到，所以这里不排除服务器上有的
+            # 也没必要多这个麻烦，如果服务器上有，服务器自己就忽略了
+            all_ext_ids = set(self.chrom_ins_map[name].extensions.keys())
+            sent_ids = set(self.sent_ext_cache)
+            not_sent_ids = all_ext_ids - sent_ids
+            ready_to_sent: dict[str, Extension] = {}
+            for id_ in not_sent_ids:
+                ready_to_sent[id_] = self.chrom_ins_map[name].extensions[id_]
+            self.START_SENDING_EXT.emit(ready_to_sent)
+            self.sent_ext_cache.extend(ready_to_sent.keys())
+            self.logger.info(f"[API POST] 发送 {len(ready_to_sent)} 个插件 ID")
 
         self.update_all_data(self.chrom_ins_map[name], type_, exec_path)
 

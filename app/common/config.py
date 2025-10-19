@@ -14,11 +14,12 @@ class Config(QConfig):
                                     OptionsValidator(SmoothMode), EnumSerializer(SmoothMode), restart=True)
 
 
-VERSION = '4.1.0'
+VERSION = '4.1.1'
 ORG_NAME = "Oranje"
 APP_NAME = "ChromHelper"
 ZH_APP_NAME = "浏览器助手"
 APP_DIR = get_app_dir(ORG_NAME, APP_NAME)
+SENT_CACHE_FILE = Path(APP_DIR, "sent_ext.json")
 
 cfg = Config()
 cfg.themeMode.value = Theme.LIGHT
