@@ -1,13 +1,13 @@
-import requests
 from logging import Logger
 from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QWidget, QVBoxLayout
 )
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel, QSize
+from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel, QSize, QThread, Signal
 from qfluentwidgets import (
     MSFluentWindow, NavigationItemPosition, PillPushButton,
     PushButton, ModelComboBox, setTheme, SplashScreen, SystemThemeListener,
+    InfoBar, InfoBarPosition
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.components.profiles_table import ProfilesTable
@@ -18,7 +18,8 @@ from app.components.debug_interface import DebugInterface
 from app.components.settings_interface import SettingsInterface
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
-from app.common.utils import get_icon_path, SAFE_MAP_ICON, SAFE_MARKS_API, SafeMark
+from app.common.api_worker import ApiWorker
+from app.common.utils import get_icon_path, SAFE_MAP_ICON, SafeMark
 from app.common.config import cfg
 from app.database.db_operations import DBManger
 
@@ -108,6 +109,11 @@ class CHMSFluentWindow(MSFluentWindow):
 
 class MainWindow(CHMSFluentWindow):
 
+    START_QUERY_EXT_SAFE_MARK= Signal()
+    EXT_SAFE_MARK_PROCESS_FINISHED = Signal(dict)
+    # 标记刚打开软件时的拉取数据
+    IS_INIT = True
+
     def __init__(self, title: str, width: int, height: int, logger: Logger):
         super().__init__()
         self.logger = logger
@@ -143,6 +149,16 @@ class MainWindow(CHMSFluentWindow):
         self.cmbx_browsers.currentIndexChanged.connect(self.on_cmbx_browsers_current_index_changed)
         self.config_interface.userdata_changed.connect(self.on_config_userdata_changed)
 
+        # === API Worker ===
+        self.api_thread = QThread()
+        self.worker = ApiWorker()
+        self.worker.moveToThread(self.api_thread)
+        self.worker.queryNecessaryFinished.connect(self.process_ext_safe_marks)
+        self.worker.error.connect(self.handle_api_error)
+        self.EXT_SAFE_MARK_PROCESS_FINISHED.connect(self.extension_interface.update_safe_marks)
+        self.START_QUERY_EXT_SAFE_MARK.connect(self.worker.do_query_necessary)
+        self.api_thread.start()
+
         # ===== prepare for splashscreen ======
         self.setWindowTitle(title)
         self.setWindowIcon(QIcon(":/images/logo.png"))
@@ -170,6 +186,8 @@ class MainWindow(CHMSFluentWindow):
     def closeEvent(self, event):
         self.theme_listener.terminate()
         self.theme_listener.deleteLater()
+        self.api_thread.quit()
+        self.api_thread.wait()
         super().closeEvent(event)
 
     def post_init_window(self, width: int, height: int):
@@ -184,16 +202,19 @@ class MainWindow(CHMSFluentWindow):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
-    def query_ext_safe_marks(self):
+    def process_ext_safe_marks(self, raw_ext_safe_marks: list[dict]):
         self.ext_safe_marks.clear()
-        try:
-            resp = requests.get(f"{SAFE_MARKS_API}/query_necessary")
-            resp.raise_for_status()
-            raw_data: list[dict] = resp.json()
-            for e in raw_data:
-                self.ext_safe_marks[e["ID"]] = SafeMark(id=e["ID"], safe=e["SAFE"])
-        except requests.exceptions.RequestException as e:
-            self.logger.warning(f"[API GET] {e}")
+        for e in raw_ext_safe_marks:
+            self.ext_safe_marks[e["ID"]] = SafeMark(id=e["ID"], safe=e["SAFE"])
+        self.EXT_SAFE_MARK_PROCESS_FINISHED.emit(self.ext_safe_marks)
+        InfoBar.success("", "插件安全标记已更新", isClosable=True, duration=3000,
+                        position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
+
+    def handle_api_error(self, error_message: str):
+        """显示来自工作线程的错误消息"""
+        InfoBar.error("", "无法获取插件安全标记", isClosable=True, duration=3000,
+                      position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
+        self.logger.error(f"[API ERROR] {error_message}")
 
     def update_all_data(self, chrom_ins: ChromInstance, browser: str, exec_path: str):
         self.profile_interface.update_model(
@@ -219,21 +240,29 @@ class MainWindow(CHMSFluentWindow):
         )
 
     def _update_chrom_ins_map(self, name: str, data_path: str):
-        # 这个函数不涉及 UI 操作，避免在子线程运行时出问题
+        # 这个函数不要涉及 UI 操作，避免在子线程运行时出问题
         chrom_ins = ChromInstance(data_path, self.logger)
         chrom_ins.fetch_all_profiles()
         chrom_ins.fetch_extensions_from_all_profiles()
         chrom_ins.fetch_bookmarks_from_all_profiles()
         self.chrom_ins_map[name] = chrom_ins
-        # 只在强制刷新的时候重新拉取一下标记
-        self.query_ext_safe_marks()
 
     def update_by_one_index(self, index: QModelIndex, force: bool):
         name = index.data(Qt.ItemDataRole.EditRole)
         type_, exec_path, data_path = index.data(Qt.ItemDataRole.UserRole)
+        if force or self.IS_INIT:
+            # 只在强制刷新的时候重新拉取一下标记
+            # 不能直接调用 do_query_necessary，否则还是会堵塞窗口，要通过信号槽的方法
+            self.START_QUERY_EXT_SAFE_MARK.emit()
+            # 大部分时候拉取比较快，就不显示了
+            # InfoBar.info("", "正在拉取插件安全标记……", isClosable=True, duration=3000,
+            #              position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
+            self.IS_INIT = False
+
         if force or name not in self.chrom_ins_map:
             run_some_task("正在获取浏览器数据……", self,
                           self._update_chrom_ins_map, name=name, data_path=data_path)
+
         self.update_all_data(self.chrom_ins_map[name], type_, exec_path)
 
     def on_pbn_refresh_clicked(self):

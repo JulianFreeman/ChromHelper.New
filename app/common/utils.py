@@ -23,6 +23,11 @@ SAFE_MAP_ICON = {
 
 SAFE_MARKS_API = "https://safe-marks.oranj.work/api/v1/ext"
 
+
+class APIException(Exception):
+    pass
+
+
 @dataclass
 class SafeMark(object):
     id: str

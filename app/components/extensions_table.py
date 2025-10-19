@@ -150,6 +150,12 @@ class ExtensionsModel(QAbstractTableModel):
 
         self.endResetModel()
 
+    def update_safe_marks(self, ext_safe_marks: dict[str, SafeMark]):
+        self.beginResetModel()
+        self.ext_safe_marks.clear()
+        self.ext_safe_marks.update(ext_safe_marks)
+        self.endResetModel()
+
 
 class SafeFilterProxyModel(QSortFilterProxyModel):
 
@@ -313,3 +319,7 @@ class ExtensionsTable(TreeView):
         self.extensions_model.update_data(extensions, ext_safe_marks)
 
         self.setColumnWidth(0, 250)
+
+    def update_safe_marks(self, ext_safe_marks: dict[str, SafeMark]):
+        self.ext_safe_marks = ext_safe_marks
+        self.extensions_model.update_safe_marks(ext_safe_marks)
