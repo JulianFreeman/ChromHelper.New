@@ -8,7 +8,7 @@ class ApiWorker(QObject):
     """在单独的线程中执行网络请求，避免 GUI 冻结"""
     # 定义信号
     queryNecessaryFinished = Signal(list)
-    addBatchFinished = Signal(dict)
+    addBatchFinished = Signal(list)
     error = Signal(str)
 
     def __init__(self):

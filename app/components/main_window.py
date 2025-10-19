@@ -3,7 +3,9 @@ from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QWidget, QVBoxLayout
 )
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel, QSize, QThread, Signal
+from PySide6.QtCore import (
+    Qt, QModelIndex, QAbstractListModel, QSize, QThread, Signal,
+)
 from qfluentwidgets import (
     MSFluentWindow, NavigationItemPosition, PillPushButton,
     PushButton, ModelComboBox, setTheme, SplashScreen, SystemThemeListener,
@@ -16,7 +18,7 @@ from app.components.bookmarks_table import BookmarksTable
 from app.components.config_interface import ConfigInterface
 from app.components.debug_interface import DebugInterface
 from app.components.settings_interface import SettingsInterface
-from app.chromy import ChromInstance
+from app.chromy import ChromInstance, Extension
 from app.common.thread import run_some_task
 from app.common.api_worker import ApiWorker
 from app.common.utils import get_icon_path, SAFE_MAP_ICON, SafeMark
@@ -109,8 +111,12 @@ class CHMSFluentWindow(MSFluentWindow):
 
 class MainWindow(CHMSFluentWindow):
 
+    # querying related
     START_QUERY_EXT_SAFE_MARK= Signal()
     EXT_SAFE_MARK_PROCESS_FINISHED = Signal(dict)
+    # sending related
+    START_SENDING_EXT = Signal(dict)
+    EXT_PREPARED_FINISHED = Signal(list)
     # 标记刚打开软件时的拉取数据
     IS_INIT = True
 
@@ -157,6 +163,8 @@ class MainWindow(CHMSFluentWindow):
         self.worker.error.connect(self.handle_api_error)
         self.EXT_SAFE_MARK_PROCESS_FINISHED.connect(self.extension_interface.update_safe_marks)
         self.START_QUERY_EXT_SAFE_MARK.connect(self.worker.do_query_necessary)
+        self.START_SENDING_EXT.connect(self.prepare_sending_ext)
+        self.EXT_PREPARED_FINISHED.connect(self.worker.do_add_batch)
         self.api_thread.start()
 
         # ===== prepare for splashscreen ======
@@ -210,9 +218,20 @@ class MainWindow(CHMSFluentWindow):
         InfoBar.success("", "插件安全标记已更新", isClosable=True, duration=3000,
                         position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
 
+    def prepare_sending_ext(self, ext: dict[str, Extension]):
+        # 这里就把所有插件都发了，如果重复服务器就忽略了
+        # 正常只有在强制刷新的时候会获取插件，也会发送，但一般不会频繁强制刷新
+        raw_ext_data = []
+        for e in ext:
+            raw_ext_data.append({
+                "ID": ext[e].id,
+                "NAME": ext[e].name
+            })
+        self.EXT_PREPARED_FINISHED.emit(raw_ext_data)
+
     def handle_api_error(self, error_message: str):
         """显示来自工作线程的错误消息"""
-        InfoBar.error("", "无法获取插件安全标记", isClosable=True, duration=3000,
+        InfoBar.error("", "检测到 API 错误，详情查看输出页", isClosable=True, duration=3000,
                       position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
         self.logger.error(f"[API ERROR] {error_message}")
 
@@ -238,6 +257,7 @@ class MainWindow(CHMSFluentWindow):
             exec_path,
             chrom_ins.delete_bookmarks,
         )
+        self.START_SENDING_EXT.emit(chrom_ins.extensions)
 
     def _update_chrom_ins_map(self, name: str, data_path: str):
         # 这个函数不要涉及 UI 操作，避免在子线程运行时出问题
