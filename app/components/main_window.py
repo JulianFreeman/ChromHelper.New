@@ -1,3 +1,4 @@
+import requests
 from logging import Logger
 from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QWidget, QVBoxLayout
@@ -17,7 +18,7 @@ from app.components.debug_interface import DebugInterface
 from app.components.settings_interface import SettingsInterface
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
-from app.common.utils import get_icon_path, SAFE_MAP_ICON
+from app.common.utils import get_icon_path, SAFE_MAP_ICON, SAFE_MARKS_API, SafeMark
 from app.common.config import cfg
 from app.database.db_operations import DBManger
 
@@ -87,7 +88,6 @@ class CHMSFluentWindow(MSFluentWindow):
             c.setText(text)
             c.setIcon(SAFE_MAP_ICON[m])
             c.setProperty("mark", m)
-            # c.toggled.connect(self.update_filter)
             self.safe_switches.append(c)
             self.hly_switches.addWidget(c)
 
@@ -113,6 +113,8 @@ class MainWindow(CHMSFluentWindow):
         self.logger = logger
         self.dbm = DBManger()
         self.chrom_ins_map: dict[str, ChromInstance] = {}
+        self.ext_safe_marks: dict[str, SafeMark] = {}
+
         self.theme_listener = SystemThemeListener(self)
 
         userdata_info = self.dbm.select_all()
@@ -160,6 +162,11 @@ class MainWindow(CHMSFluentWindow):
 
         self.post_init_window(width, height)
 
+        # 放最后
+        for c in self.safe_switches:
+            c.toggled.connect(self.update_filter)
+            c.setChecked(True)
+
     def closeEvent(self, event):
         self.theme_listener.terminate()
         self.theme_listener.deleteLater()
@@ -177,6 +184,17 @@ class MainWindow(CHMSFluentWindow):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
+    def query_ext_safe_marks(self):
+        self.ext_safe_marks.clear()
+        try:
+            resp = requests.get(f"{SAFE_MARKS_API}/query_necessary")
+            resp.raise_for_status()
+            raw_data: list[dict] = resp.json()
+            for e in raw_data:
+                self.ext_safe_marks[e["ID"]] = SafeMark(id=e["ID"], safe=e["SAFE"])
+        except requests.exceptions.RequestException as e:
+            self.logger.warning(f"[API GET] {e}")
+
     def update_all_data(self, chrom_ins: ChromInstance, browser: str, exec_path: str):
         self.profile_interface.update_model(
             browser,
@@ -190,6 +208,7 @@ class MainWindow(CHMSFluentWindow):
             chrom_ins.userdata_dir,
             exec_path,
             chrom_ins.delete_extensions,
+            self.ext_safe_marks,
         )
         self.bookmark_interface.update_model(
             chrom_ins.bookmarks,
@@ -206,6 +225,8 @@ class MainWindow(CHMSFluentWindow):
         chrom_ins.fetch_extensions_from_all_profiles()
         chrom_ins.fetch_bookmarks_from_all_profiles()
         self.chrom_ins_map[name] = chrom_ins
+        # 只在强制刷新的时候重新拉取一下标记
+        self.query_ext_safe_marks()
 
     def update_by_one_index(self, index: QModelIndex, force: bool):
         name = index.data(Qt.ItemDataRole.EditRole)
@@ -227,3 +248,12 @@ class MainWindow(CHMSFluentWindow):
         self.userdata_model.update_model(self.dbm.select_all())
         if is_reset and self.userdata_model.rowCount() > 0:
             self.cmbx_browsers.setCurrentIndex(0)
+
+    # 只有插件部分用到
+    def update_filter(self, checked: bool):
+        accepted_status = []
+        for c in self.safe_switches:
+            if c.isChecked():
+                accepted_status.append(c.property("mark"))
+
+        self.extension_interface.filter_model.set_accepted_status(accepted_status)

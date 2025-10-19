@@ -1,10 +1,18 @@
 import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from PySide6.QtWidgets import QWidget
 from qfluentwidgets import MessageBox, InfoBarIcon
 
 SUPPORTED_BROWSERS = ["chrome", "edge", "brave", "vivaldi", "yandex", "chromium"]
+
+SAFE_MAP = {
+    1: "安全",
+    0: "未知",
+    -1: "不安全",
+    -2: "未记录"
+}
 
 SAFE_MAP_ICON = {
     1: InfoBarIcon.SUCCESS.icon(),
@@ -12,6 +20,15 @@ SAFE_MAP_ICON = {
     -1: InfoBarIcon.ERROR.icon(),
     -2: InfoBarIcon.INFORMATION.icon(),
 }
+
+SAFE_MARKS_API = "https://safe-marks.oranj.work/api/v1/ext"
+
+@dataclass
+class SafeMark(object):
+    id: str
+    name: str = ""
+    safe: int = -2
+
 
 icons_map = {
     "chrome": ":/images/icons/chrome_32.png",
