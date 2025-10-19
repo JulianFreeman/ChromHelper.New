@@ -296,9 +296,10 @@ class MainWindow(CHMSFluentWindow):
             ready_to_sent: dict[str, Extension] = {}
             for id_ in not_sent_ids:
                 ready_to_sent[id_] = self.chrom_ins_map[name].extensions[id_]
-            self.START_SENDING_EXT.emit(ready_to_sent)
-            self.sent_ext_cache.extend(ready_to_sent.keys())
-            self.logger.info(f"[API POST] 发送 {len(ready_to_sent)} 个插件 ID")
+            if len(ready_to_sent) > 0:
+                self.START_SENDING_EXT.emit(ready_to_sent)
+                self.sent_ext_cache.extend(ready_to_sent.keys())
+                self.logger.info(f"[API POST] 发送 {len(ready_to_sent)} 个插件 ID")
 
         self.update_all_data(self.chrom_ins_map[name], type_, exec_path)
 
