@@ -3,7 +3,7 @@ from typing import Callable
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize, QSortFilterProxyModel
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QTreeView, QStyleOptionViewItem, QApplication, QStyle
+    QTreeView, QStyleOptionViewItem
 )
 from qfluentwidgets import TreeView, RoundMenu, Action, TreeItemDelegate
 from qfluentwidgets import FluentIcon as Fi
@@ -54,11 +54,7 @@ class ColumnIconDelegate(TreeItemDelegate):
             if opt.widget:
                 opt.decorationSize = opt.widget.iconSize()
 
-        # 3. 使用修改后的 option 调用父类的 paint 方法
-        # 我们不直接调用 super().paint()，而是通过 style 来绘制
-        # 这样可以确保所有样式（如选中、悬停）都正确
-        style = opt.widget.style() if opt.widget else QApplication.style()
-        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, opt, painter, opt.widget)
+        super().paint(painter, opt, index)
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         """
@@ -77,10 +73,7 @@ class ColumnIconDelegate(TreeItemDelegate):
             if opt.widget:
                 opt.decorationSize = opt.widget.iconSize()
 
-        # 3. 使用修改后的 option 调用父类的 sizeHint
-        # 同样，我们通过 style 来获取正确的尺寸
-        style = opt.widget.style() if opt.widget else QApplication.style()
-        size = style.sizeFromContents(QStyle.ContentsType.CT_ItemViewItem, opt, QSize(), opt.widget)
+        size = super().sizeHint(opt, index)
 
         # 确保高度至少和图标一样高
         if index.column() == 0:
@@ -100,6 +93,8 @@ class ExtensionsModel(QAbstractTableModel):
         self.ext_safe_marks = ext_safe_marks
         self.extension_ids = list(self.extensions.keys())
         self.headers = ["名称", "安全性", "描述"]
+
+        self.extensions_icon_cache: dict[str, QIcon] = {}
 
     def rowCount(self, parent: QModelIndex = ...):
         return len(self.extension_ids)
@@ -122,10 +117,15 @@ class ExtensionsModel(QAbstractTableModel):
                 return ext.description
         elif role == Qt.ItemDataRole.DecorationRole:
             if col == 0:
-                if path_not_exist(ext.icon):
-                    return QIcon(get_icon_path("none"))
+                if ext_id in self.extensions_icon_cache:
+                    return self.extensions_icon_cache[ext_id]
                 else:
-                    return QIcon(ext.icon)
+                    if path_not_exist(ext.icon):
+                        icon = QIcon(get_icon_path("none"))
+                    else:
+                        icon = QIcon(ext.icon)
+                    self.extensions_icon_cache[ext_id] = icon
+                    return icon
             if col == 1:
                 return SAFE_MAP_ICON[safe]
         elif role == Qt.ItemDataRole.UserRole:
@@ -147,6 +147,8 @@ class ExtensionsModel(QAbstractTableModel):
 
         self.ext_safe_marks.clear()
         self.ext_safe_marks.update(ext_safe_marks)
+
+        self.extensions_icon_cache.clear()
 
         self.endResetModel()
 

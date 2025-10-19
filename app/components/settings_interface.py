@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QWidget
 from qfluentwidgets import (
     ScrollArea, ExpandLayout, SettingCardGroup,
     OptionsSettingCard, CustomColorSettingCard, setTheme, setThemeColor,
-    SwitchSettingCard, InfoBar
+    SwitchSettingCard, InfoBar, InfoBarPosition
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.common.config import cfg
@@ -67,4 +67,5 @@ class SettingsInterface(ScrollArea):
         self.theme_color_card.colorChanged.connect(lambda c: setThemeColor(c))
 
     def show_restart_tip(self):
-        InfoBar.warning("", "设置已更新，重启应用生效。", duration=5000, parent=self.window())
+        InfoBar.warning("", "设置已更新，重启应用生效。", duration=5000,
+                        position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())

@@ -9,7 +9,6 @@ from PySide6.QtCore import (
 from qfluentwidgets import (
     MSFluentWindow, NavigationItemPosition, PillPushButton,
     PushButton, ModelComboBox, setTheme, SplashScreen, SystemThemeListener,
-    InfoBar, InfoBarPosition
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.components.profiles_table import ProfilesTable
@@ -215,8 +214,7 @@ class MainWindow(CHMSFluentWindow):
         for e in raw_ext_safe_marks:
             self.ext_safe_marks[e["ID"]] = SafeMark(id=e["ID"], safe=e["SAFE"])
         self.EXT_SAFE_MARK_PROCESS_FINISHED.emit(self.ext_safe_marks)
-        InfoBar.success("", "插件安全标记已更新", isClosable=True, duration=3000,
-                        position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
+        self.logger.info("插件安全标记已更新。")
 
     def prepare_sending_ext(self, ext: dict[str, Extension]):
         # 这里就把所有插件都发了，如果重复服务器就忽略了
@@ -231,8 +229,6 @@ class MainWindow(CHMSFluentWindow):
 
     def handle_api_error(self, error_message: str):
         """显示来自工作线程的错误消息"""
-        InfoBar.error("", "检测到 API 错误，详情查看输出页", isClosable=True, duration=3000,
-                      position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
         self.logger.error(f"[API ERROR] {error_message}")
 
     def update_all_data(self, chrom_ins: ChromInstance, browser: str, exec_path: str):
@@ -274,9 +270,7 @@ class MainWindow(CHMSFluentWindow):
             # 只在强制刷新的时候重新拉取一下标记
             # 不能直接调用 do_query_necessary，否则还是会堵塞窗口，要通过信号槽的方法
             self.START_QUERY_EXT_SAFE_MARK.emit()
-            # 大部分时候拉取比较快，就不显示了
-            # InfoBar.info("", "正在拉取插件安全标记……", isClosable=True, duration=3000,
-            #              position=InfoBarPosition.BOTTOM_RIGHT, parent=self.window())
+            self.logger.info("正在拉取插件安全标记……")
             self.IS_INIT = False
 
         if force or name not in self.chrom_ins_map:
