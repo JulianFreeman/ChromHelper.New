@@ -5,8 +5,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QModelIndex, QAbstractListModel, QSize
 from qfluentwidgets import (
-    MSFluentWindow, NavigationItemPosition,
-    PushButton, ModelComboBox, setTheme, Theme, SplashScreen, SystemThemeListener
+    MSFluentWindow, NavigationItemPosition, PillPushButton,
+    PushButton, ModelComboBox, setTheme, SplashScreen, SystemThemeListener,
 )
 from qfluentwidgets import FluentIcon as Fi
 from app.components.profiles_table import ProfilesTable
@@ -17,7 +17,7 @@ from app.components.debug_interface import DebugInterface
 from app.components.settings_interface import SettingsInterface
 from app.chromy import ChromInstance
 from app.common.thread import run_some_task
-from app.common.utils import get_icon_path
+from app.common.utils import get_icon_path, SAFE_MAP_ICON
 from app.common.config import cfg
 from app.database.db_operations import DBManger
 
@@ -60,7 +60,7 @@ class CHMSFluentWindow(MSFluentWindow):
         self.wg_top = QWidget(self)
         self.hly_top = QHBoxLayout()
         self.wg_top.setLayout(self.hly_top)
-        self.hly_top.setContentsMargins(0, 0, 0, 0)
+        self.hly_top.setContentsMargins(0, 0, 5, 0)
 
         self.pbn_refresh = PushButton(self)
         self.pbn_refresh.setText("刷新当前数据")
@@ -73,6 +73,26 @@ class CHMSFluentWindow(MSFluentWindow):
         self.hly_top.addWidget(self.cmbx_browsers)
         self.hly_top.addWidget(self.pbn_refresh)
         self.hly_top.addStretch(1)
+
+        safe_checks = [
+            ("安全", 1), ("未知", 0), ("不安全", -1), ("未记录", -2),
+        ]
+        self.switches_group = QWidget(self)
+        self.hly_switches = QHBoxLayout()
+        self.hly_switches.setContentsMargins(0, 0, 0, 0)
+        self.switches_group.setLayout(self.hly_switches)
+        self.safe_switches: list[PillPushButton] = []
+        for text, m in safe_checks:
+            c = PillPushButton(self.switches_group)
+            c.setText(text)
+            c.setIcon(SAFE_MAP_ICON[m])
+            c.setProperty("mark", m)
+            # c.toggled.connect(self.update_filter)
+            self.safe_switches.append(c)
+            self.hly_switches.addWidget(c)
+
+        self.hly_top.addWidget(self.switches_group)
+        self.switches_group.hide()  # 一开始先隐藏
         self.hly_top.setSpacing(4)
 
         self.vly_right.addWidget(self.wg_top)
@@ -82,10 +102,8 @@ class CHMSFluentWindow(MSFluentWindow):
 
     def switchTo(self, interface: QWidget):
         super().switchTo(interface)
-        if interface.property("is_bottom"):
-            self.wg_top.setHidden(True)
-        else:
-            self.wg_top.setHidden(False)
+        self.wg_top.setHidden(interface.property("is_bottom") is True)
+        self.switches_group.setHidden(interface.property("is_extension") is not True)
 
 
 class MainWindow(CHMSFluentWindow):
@@ -107,6 +125,7 @@ class MainWindow(CHMSFluentWindow):
         self.config_interface = ConfigInterface(name="config", dbm=self.dbm, parent=self)
         self.debug_interface = DebugInterface(name="debug", logger=logger, parent=self)
         self.settings_interface = SettingsInterface(name="settings", parent=self)
+        self.extension_interface.setProperty("is_extension", True)
         self.config_interface.setProperty("is_bottom", True)
         self.debug_interface.setProperty("is_bottom", True)
         self.settings_interface.setProperty("is_bottom", True)

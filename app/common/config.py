@@ -14,7 +14,7 @@ class Config(QConfig):
                                     OptionsValidator(SmoothMode), EnumSerializer(SmoothMode), restart=True)
 
 
-VERSION = '4.0.2'
+VERSION = '4.1.0'
 ORG_NAME = "Oranje"
 APP_NAME = "ChromHelper"
 ZH_APP_NAME = "浏览器助手"

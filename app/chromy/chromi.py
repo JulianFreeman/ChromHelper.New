@@ -482,7 +482,8 @@ def open_profiles(
         show_quick_tip(widget, "提示", "你没有选中任何用户。")
         return
 
-    cmd = rf'"{exec_path}" --user-data-dir="{userdata_dir}" --profile-directory="{{0}}"'
+    # 打开一个网址，就能自己检测要打开的用户是否已经是开着的
+    cmd = rf'"{exec_path}" --user-data-dir="{userdata_dir}" --profile-directory="{{0}}" https://www.google.com'
     for profile_id in profile_ids:
         subprocess.Popen(cmd.format(profile_id), shell=True)
         time.sleep(0.5)

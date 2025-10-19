@@ -2,9 +2,16 @@ import os
 import sys
 from pathlib import Path
 from PySide6.QtWidgets import QWidget
-from qfluentwidgets import MessageBox
+from qfluentwidgets import MessageBox, InfoBarIcon
 
 SUPPORTED_BROWSERS = ["chrome", "edge", "brave", "vivaldi", "yandex", "chromium"]
+
+SAFE_MAP_ICON = {
+    1: InfoBarIcon.SUCCESS.icon(),
+    0: InfoBarIcon.WARNING.icon(),
+    -1: InfoBarIcon.ERROR.icon(),
+    -2: InfoBarIcon.INFORMATION.icon(),
+}
 
 icons_map = {
     "chrome": ":/images/icons/chrome_32.png",

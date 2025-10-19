@@ -3,7 +3,7 @@ from typing import Callable
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QSize, QSortFilterProxyModel
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QTreeView
-from qfluentwidgets import TreeView, RoundMenu, Action, SmoothMode
+from qfluentwidgets import TreeView, RoundMenu, Action
 from qfluentwidgets import FluentIcon as Fi
 
 from app.common.utils import accept_warning, get_icon_path, show_quick_tip
